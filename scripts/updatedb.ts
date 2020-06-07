@@ -1,9 +1,9 @@
-export {}
-
+require('dotenv').config()
 const ft = require('faunadb-transform').default
 
 const collections = {
   users: { create: true, update: true },
+  tokens_issued: { create: true, update: true },
   // have to use _ because "events" is a reserved name
   _events: { create: true, update: true },
 }
@@ -18,6 +18,21 @@ const indexes = {
       unique: true,
       terms: [{ field: ['data', 'email'] }],
       data: { description: 'Index by unique email' },
+    },
+  },
+  all_tokens_issued: {
+    create: true,
+    update: true,
+    params: { source: 'tokens_issued' },
+  },
+  tokens_issued_by_email: {
+    create: true,
+    update: true,
+    params: {
+      source: 'tokens_issued',
+      unique: false,
+      terms: [{ field: ['data', 'email'] }],
+      data: { description: 'Index by email' },
     },
   },
   all_events: { create: true, update: true, params: { source: 'users' } },
@@ -73,8 +88,11 @@ const json = {
 }
 
 const settings = {
-  debug: true, // admin key
-  target: 'fnADsJlOiRACFIQ_DokSvBDITL3SItVNwp5-PNu1',
+  debug: true,
+  // admin key
+  target: process.env.FAUNA_ADMIN_KEY,
 }
 
 ft(json, settings).then((result) => {})
+
+export {}
