@@ -1,10 +1,10 @@
 import React from 'react'
-import auth0 from '../utils/auth0'
+import auth0 from '../lib/auth0/auth0'
 
 import { GetServerSideProps } from 'next'
 import withAuth from '../components/with-auth'
 import Layout from '../components/layout'
-import { useFetchUser } from '../utils/user'
+import { useFetchUser } from '../lib/auth0/user'
 
 const Profile = (props) => {
   const [state, setState] = React.useState({ session: undefined })

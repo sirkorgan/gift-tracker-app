@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 
-import auth0 from '../utils/auth0'
-import { fetchUser } from '../utils/user'
-import createLoginUrl from '../utils/url-helper'
+import auth0 from '../lib/auth0/auth0'
+import { fetchUser } from '../lib/auth0/user'
+import createLoginUrl from '../lib/auth0/url-helper'
 import RedirectToLogin from './login-redirect'
 
 export default function withAuth(InnerComponent) {

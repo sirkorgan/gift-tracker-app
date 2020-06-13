@@ -1,4 +1,4 @@
-import auth0 from '../../utils/auth0'
+import auth0 from '../../lib/auth0/auth0'
 
 // Note: This route supports providing redirectTo in the querystring, eg:
 // (/api/login?redirectTo=/profile). The user will automatically be redirect to

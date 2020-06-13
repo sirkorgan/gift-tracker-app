@@ -2,7 +2,7 @@ import React from 'react'
 import Head from 'next/head'
 
 import Header from './header'
-import { UserProvider } from '../utils/user'
+import { UserProvider } from '../lib/auth0/user'
 
 const Layout = ({ user = undefined, loading = false, children }) => (
   <UserProvider value={{ user, loading }}>

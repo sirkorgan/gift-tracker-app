@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 
-import { useUser } from '../utils/user'
+import { useUser } from '../lib/auth0/user'
 
 const Header = () => {
   const { user, loading } = useUser()

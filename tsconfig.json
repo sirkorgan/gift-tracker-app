@@ -21,7 +21,7 @@
     "**/*.tsx",
     "components/with-auth.js",
     "components/login-redirect.jsx",
-    "utils/auth0.js",
-    "utils/url-helper.js"
+    "lib/auth0/auth0.js",
+    "lib/auth0/url-helper.js"
   ]
 }

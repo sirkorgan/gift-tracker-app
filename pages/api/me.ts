@@ -1,4 +1,4 @@
-import auth0 from '../../utils/auth0'
+import auth0 from '../../lib/auth0/auth0'
 
 async function me(req, res) {
   try {

@@ -1,6 +1,6 @@
 import React from 'react'
 import Layout from '../components/layout'
-import { useFetchUser } from '../utils/user'
+import { useFetchUser } from '../lib/auth0/user'
 
 const Index = (props) => {
   const { user, loading } = useFetchUser()

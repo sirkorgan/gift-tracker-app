@@ -4,8 +4,10 @@ const ft = require('faunadb-transform').default
 const collections = {
   users: { create: true, update: true },
   tokens_issued: { create: true, update: true },
-  // have to use _ because "events" is a reserved name
-  _events: { create: true, update: true },
+  profiles: { create: true, update: true },
+  // occasions: { create: true, update: true },
+  // gifts: { create: true, update: true },
+  // claims: { create: true, update: true },
 }
 
 const indexes = {
@@ -17,7 +19,6 @@ const indexes = {
       source: 'users',
       unique: true,
       terms: [{ field: ['data', 'email'] }],
-      data: { description: 'Index by unique email' },
     },
   },
   all_tokens_issued: {
@@ -32,10 +33,46 @@ const indexes = {
       source: 'tokens_issued',
       unique: false,
       terms: [{ field: ['data', 'email'] }],
-      data: { description: 'Index by email' },
     },
   },
-  all_events: { create: true, update: true, params: { source: 'users' } },
+  all_profiles: {
+    create: true,
+    update: true,
+    params: { source: 'profiles' },
+  },
+  profiles_by_username: {
+    create: true,
+    update: true,
+    params: {
+      source: 'profiles',
+      unique: true,
+      terms: [{ field: ['data', 'username'] }],
+    },
+  },
+  // all_occasions: {
+  //   create: true,
+  //   update: true,
+  //   params: { source: 'occasions' },
+  // },
+  // occasions_by_organizer: {
+  //   create: true,
+  //   update: true,
+  //   params: {
+  //     source: 'occasions',
+  //     unique: true,
+  //     terms: [{ field: ['data', 'organizer'] }],
+  //   },
+  // },
+  // all_gifts: {
+  //   create: true,
+  //   update: true,
+  //   params: { source: 'gifts' },
+  // },
+  // all_claims: {
+  //   create: true,
+  //   update: true,
+  //   params: { source: 'claims' },
+  // },
 }
 
 const roles = {
@@ -89,7 +126,6 @@ const json = {
 
 const settings = {
   debug: true,
-  // admin key
   target: process.env.FAUNA_ADMIN_KEY,
 }
 
