@@ -1,4 +1,4 @@
-import { UserProfile, User, Occasion } from '../domain-types'
+import { UserProfile, User, Occasion } from './domain-types'
 
 export interface UserAPI {
   getUserProfileByUserName: (userName: string) => Promise<UserProfile>
@@ -31,7 +31,12 @@ export interface UserAPI {
 
 export interface AdminAPI {
   getUserByEmail: (email: string) => Promise<User>
-  getProfileById: (profileId: string) => Promise<UserProfile>
+  getUserProfileById: (profileId: string) => Promise<UserProfile>
+  /**
+   * Returns Ref of Token issued for user.
+   * @param email
+   */
+  getUserTokenByEmail: (email: string) => Promise<string>
   profileExists: (userName: string) => Promise<boolean>
   createUserAndProfile: (
     email: string

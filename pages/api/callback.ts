@@ -1,7 +1,7 @@
 import faunadb from 'faunadb'
 import auth0 from '../../lib/auth0/auth0'
 import { createAdminAPI } from '../../lib/api/fauna-api'
-import { User, UserProfile } from '../../lib/domain-types'
+import { User, UserProfile } from '../../lib/types/domain-types'
 
 // After the transaction is completed Auth0 will redirect the user back to your
 // application. This is why the callback route (/pages/api/callback.js) needs to
@@ -47,7 +47,7 @@ export default async function callback(req, res) {
         let user: User, profile: UserProfile
         try {
           user = await adminApi.getUserByEmail(email)
-          profile = await adminApi.getProfileById(user.profileId)
+          profile = await adminApi.getUserProfileById(user.profileId)
         } catch (error) {
           if (error.requestResult?.statusCode === 404) {
             // If user does not exist, create it.

@@ -1,9 +1,18 @@
 import faunadb from 'faunadb'
 
+import { AdminAPI } from '../lib/types/api-types'
+import { TestUser, TestUsers } from '../lib/types/api-test-types'
+import { createUserAPI, createAdminAPI } from '../lib/api/fauna-api'
+
 /** True if we are running as a script rather than a module */
 const isCLI = () => {
   return process.argv.length > 1 && import.meta.url.includes(process.argv[1])
 }
+
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+const q = faunadb.query
 
 const {
   Concat,
@@ -47,7 +56,7 @@ const indexes = [
     params: { source: 'users' },
   },
   {
-    name: 'user_by_email',
+    name: 'users_by_email',
     params: {
       source: 'users',
       unique: true,
@@ -95,7 +104,7 @@ const indexes = [
     params: { source: 'invitations' },
   },
   {
-    name: 'invtations_by_sender',
+    name: 'invitations_by_sender',
     params: {
       source: 'invitations',
       unique: true,
@@ -103,7 +112,7 @@ const indexes = [
     },
   },
   {
-    name: 'invtations_by_recipient',
+    name: 'invitations_by_recipient',
     params: {
       source: 'invitations',
       unique: true,
@@ -339,6 +348,56 @@ async function doIndexes(indexes = [], client: faunadb.Client) {
   console.log('Indexes - done')
 }
 
+export async function createTestUsers(target): Promise<TestUsers> {
+  try {
+    const createTestUser = async (
+      testClient: faunadb.Client,
+      adminApi: AdminAPI,
+      name: string
+    ): Promise<TestUser> => {
+      const email = `${name}@fakemail.com`
+      const userData = await adminApi.createUserAndProfile(email)
+      const userToken = await testClient.query<any>(
+        q.Create(q.Tokens(), {
+          instance: q.Ref(q.Collection('users'), userData.user.id),
+        })
+      )
+      // save userToken in tokens_issue just like they logged in normally
+      await testClient.query(
+        q.Create(q.Collection('tokens_issued'), {
+          data: {
+            email,
+            token: userToken.ref,
+          },
+        })
+      )
+      const api = createUserAPI(userToken.secret)
+      const testUser: TestUser = {
+        user: userData.user,
+        profile: userData.profile,
+        api,
+        token: userToken.secret,
+      }
+      console.log(
+        `Created user ${testUser.user.email} - ${testUser.profile.userName}`
+      )
+      return testUser
+    }
+
+    const testClient = new faunadb.Client({ secret: target })
+    const adminApi = createAdminAPI(target)
+
+    return {
+      alice: await createTestUser(testClient, adminApi, 'alice'),
+      bob: await createTestUser(testClient, adminApi, 'bob'),
+      carol: await createTestUser(testClient, adminApi, 'carol'),
+    }
+  } catch (err) {
+    console.error(`Failed to create testusers:`, err)
+    process.exit(1)
+  }
+}
+
 export async function updateDb(secret) {
   const client = new faunadb.Client({ secret })
   const json = {
@@ -350,6 +409,67 @@ export async function updateDb(secret) {
   await doIndexes(json.indexes, client)
 }
 
+/**
+ * Deletes the contents of a database.
+ * @param secret
+ */
+export async function cleanDb(secret) {
+  try {
+    console.log('Cleaning database...')
+    const client = new faunadb.Client({ secret })
+    const toDelete = [q.Indexes(), q.Collections(), q.Roles()]
+
+    for (const collection of toDelete) {
+      await client.query(
+        q.Foreach(
+          q.Paginate(collection),
+          q.Lambda((ref) => {
+            return q.Delete(ref)
+          })
+        )
+      )
+    }
+  } catch (err) {
+    console.error(`Failed to clean database:`, err)
+  }
+}
+
+async function work() {
+  const getTarget = (arg) => {
+    switch (arg) {
+      case 'prod':
+        return process.env.FAUNA_ADMIN_KEY
+      case 'test':
+        return process.env.TESTDB_SECRET
+      default:
+        console.error('Unknown DB target: ' + arg)
+        return undefined
+    }
+  }
+
+  let targetArg
+  if (process.argv.length >= 2) {
+    targetArg = process.argv[2]
+  }
+
+  let shouldClean = false
+  if (process.argv.length >= 3) {
+    shouldClean = Boolean(process.argv[3])
+  }
+
+  const target = getTarget(targetArg)
+  if (!target) {
+    console.log(`Must provide target as argument: "prod" or "test"`)
+  } else {
+    if (shouldClean) {
+      await cleanDb(target)
+      console.log('Waiting 1 minute for names to be released.')
+      await delay(60 * 1000)
+    }
+    await updateDb(target)
+    if (targetArg === 'test') await createTestUsers(target)
+  }
+}
 if (isCLI()) {
-  updateDb(process.env.FAUNA_ADMIN_KEY)
+  work()
 }

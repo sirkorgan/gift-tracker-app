@@ -7,9 +7,9 @@ import {
   animals,
 } from 'unique-names-generator'
 
-import { UserProfile, User } from '../domain-types'
-import { UserAPI, AdminAPI } from './api-types'
-import { FaunaUserProfile, FaunaRef, FaunaUser } from './fauna-types'
+import { UserProfile, User } from '../types/domain-types'
+import { UserAPI, AdminAPI } from '../types/api-types'
+import { FaunaUserProfile, FaunaRef, FaunaUser } from '../types/fauna-types'
 
 const q = faunadb.query
 
@@ -60,6 +60,9 @@ export function createAdminAPI(secret: string): AdminAPI {
 
   const getIdFromRef = (ref: FaunaRef) => ref.value.id
 
+  const makeRef = (collection: string, id: string) =>
+    q.Ref(q.Collection(collection), id)
+
   // api functions
 
   const getUserByEmail = async (email) => {
@@ -70,12 +73,19 @@ export function createAdminAPI(secret: string): AdminAPI {
     return { id: getIdFromRef(doc.ref), ...doc.data }
   }
 
-  const getProfileById = async (id: string) => {
+  const getUserProfileById = async (id: string) => {
     const doc = await client.query<FaunaUserProfile>(
       // Get will throw if nothing is found.
       q.Get(q.Ref(q.Collection('profiles'), id))
     )
     return { id: getIdFromRef(doc.ref), ...doc.data }
+  }
+
+  const getUserTokenByEmail = async (email: string) => {
+    const doc = await client.query<any>(
+      q.Get(q.Match(q.Index('tokens_issued_by_email'), email))
+    )
+    return doc.data.token
   }
 
   const profileExists = async (userName: string) => {
@@ -137,20 +147,41 @@ export function createAdminAPI(secret: string): AdminAPI {
   async function updateUserProfileName(
     profileId: string,
     userToken: string,
-    name: string
+    newName: string
   ): Promise<UserProfile> {
-    // TODO:
-    // security check: verify that user token belongs to the given profileId
+    // TODO: rbac policy: only user can modify own profile
 
     // find unique username using new name by changing hashcode
+    const profile = await getUserProfileById(profileId)
+
+    // TODO: verify userToken belongs to userId associated with the profile
+
+    let hashCode = profile.hashCode
+    let newUserName = makeUsername(newName, hashCode)
+
+    while (true === (await profileExists(newUserName))) {
+      hashCode = generateUserProfileHashCode()
+      newUserName = makeUsername(newName, hashCode)
+    }
+
     // update profile (name and username) and return new profile
-    throw new Error('Not implemented')
-    return null
+    await client.query<FaunaUserProfile>(
+      q.Update(q.Ref(q.Collection('profiles'), profile.id), {
+        data: {
+          name: newName,
+          hashCode,
+          userName: newUserName,
+        },
+      })
+    )
+
+    return await getUserProfileById(profile.id)
   }
 
   return {
     getUserByEmail,
-    getProfileById,
+    getUserProfileById,
+    getUserTokenByEmail,
     profileExists,
     createUserAndProfile,
     updateUserProfileName,

@@ -1,4 +1,4 @@
-import { User, UserProfile } from '../domain-types'
+import { User, UserProfile } from './domain-types'
 
 export interface FaunaRef {
   value: {

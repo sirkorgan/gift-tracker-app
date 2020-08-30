@@ -1,4 +1,4 @@
-import { UserProfile, User } from '../domain-types'
+import { UserProfile, User } from './domain-types'
 import { UserAPI } from './api-types'
 // for testing
 

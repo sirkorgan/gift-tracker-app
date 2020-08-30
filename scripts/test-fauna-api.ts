@@ -5,9 +5,9 @@ import faunadb from 'faunadb'
 import cuid from 'cuid'
 import chalk from 'chalk'
 
-import { AdminAPI } from '../lib/api/api-types'
-import { TestDatabase, TestUser, TestUsers } from '../lib/api/test-types'
-import { runUserTests, runAdminTests } from '../lib/api/api-tests'
+import { AdminAPI } from '../lib/types/api-types'
+import { TestDatabase, TestUser, TestUsers } from '../lib/types/api-test-types'
+import { runUserTests, runAdminTests } from '../api-tests/api-tests'
 import { createUserAPI, createAdminAPI } from '../lib/api/fauna-api'
 import { updateDb } from './updatedb'
 
@@ -22,7 +22,7 @@ const delay = (ms: number) =>
 const ADMIN_KEY = process.env.FAUNA_ADMIN_KEY
 const q = faunadb.query
 
-async function createTestDb(): Promise<TestDatabase> {
+export async function createTestDb(): Promise<TestDatabase> {
   const client = new faunadb.Client({ secret: ADMIN_KEY })
   // create db
   const name = 'testdb-' + cuid()
@@ -39,7 +39,7 @@ async function createTestDb(): Promise<TestDatabase> {
   return testDb
 }
 
-async function createTestUsers(adminApi: AdminAPI): Promise<TestUsers> {
+export async function createTestUsers(adminApi: AdminAPI): Promise<TestUsers> {
   const client = new faunadb.Client({ secret: ADMIN_KEY })
 
   const createTestUser = async (name: string): Promise<TestUser> => {
@@ -69,7 +69,7 @@ async function createTestUsers(adminApi: AdminAPI): Promise<TestUsers> {
   }
 }
 
-async function cleanupTestDb(db: TestDatabase) {
+export async function cleanupTestDb(db: TestDatabase) {
   // delete testdb
   const client = new faunadb.Client({ secret: ADMIN_KEY })
   console.log(`Deleting test database:`, db.name)
