@@ -1,41 +1,26 @@
 // use the fauna-client to perform a series of operations on the database to
 // verify that the APIs function as intended, including permission restrictions.
 
-import faunadb from 'faunadb'
-// import chalk from 'chalk'
-
 import { AdminAPI } from '../lib/types/api-types'
 import { TestDatabase, TestUser, TestUsers } from '../lib/types/api-test-types'
-import { createUserAPI, createAdminAPI } from '../lib/api/fauna-api'
+import { createAdminAPI } from '../lib/api/admin-api'
+import { createUserAPI } from '../lib/api/user-api'
 
-/** True if we are running as a script rather than a module */
-// const isCLI = () => {
-//   return process.argv.length > 1 && import.meta.url.includes(process.argv[1])
-// }
-
-// const delay = (ms: number) =>
-//   new Promise<void>((resolve) => setTimeout(resolve, ms))
-
-const ADMIN_KEY = process.env.FAUNA_ADMIN_KEY
-const q = faunadb.query
-
-const db: TestDatabase = {
+const testDb: TestDatabase = {
   name: process.env.TESTDB_NAME,
   secret: process.env.TESTDB_SECRET,
 }
-const testClient = new faunadb.Client({ secret: db.secret })
-const adminApi: AdminAPI = createAdminAPI(db.secret)
+const admin: AdminAPI = createAdminAPI(testDb.secret)
 
 async function loadUser(email: string): Promise<TestUser> {
   try {
-    const user = await adminApi.getUserByEmail(email)
-    const profile = await adminApi.getUserProfileById(user.profileId)
-    const token = await adminApi.getUserTokenByEmail(email)
-    const api = createUserAPI(token)
+    const user = await admin.getUserByEmail(email)
+    const profile = await admin.getUserProfileById(user.profileId)
+    const { secret } = await admin.loginUser(email)
+    const api = createUserAPI(secret)
     return {
       user,
       profile,
-      token,
       api,
     }
   } catch (err) {
@@ -53,18 +38,12 @@ async function loadTestUsers(): Promise<TestUsers> {
   return users
 }
 
-let testUsers: TestUsers
-beforeAll(async () => {
-  testUsers = await loadTestUsers()
-})
-
 describe('admin tests', () => {
-  test('- Alice can change her profile name', async () => {
+  test('Alice can change her profile name', async () => {
     try {
-      const { alice } = testUsers
-      const newProfile = await adminApi.updateUserProfileName(
+      const alice = await loadUser('alice@fakemail.com')
+      const newProfile = await admin.updateUserProfileName(
         alice.profile.id,
-        alice.token,
         'Alice'
       )
       expect(newProfile.name).toEqual('Alice')
@@ -74,6 +53,41 @@ describe('admin tests', () => {
       throw err
     }
   })
+  test('Duplicate name gets a new hashcode', async () => {
+    try {
+      const alice = await loadUser('alice@fakemail.com')
+      const newProfile = await admin.updateUserProfileName(
+        alice.profile.id,
+        alice.profile.name
+      )
+      expect(newProfile.name).toEqual('Alice')
+      expect(newProfile.userName.startsWith('Alice')).toBeTruthy()
+      expect(newProfile.hashCode).not.toEqual(alice.profile.hashCode)
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  })
 })
 
-describe('user tests', () => {})
+let users: TestUsers
+describe('user tests', () => {
+  beforeAll(async () => {
+    users = await loadTestUsers()
+  })
+  test('getUserByEmail - own email', async () => {
+    const user = await users.alice.api.getUserByEmail(users.alice.user.email)
+    expect(user).toEqual(users.alice.user)
+  })
+  test.only('getUserByEmail - other email', async () => {
+    expect(
+      users.alice.api.getUserByEmail(users.bob.user.email)
+    ).rejects.toThrow()
+  })
+  test('getUserProfileByUserName', async () => {
+    const userProfile = await users.alice.api.getUserProfileByUserName(
+      users.bob.profile.userName
+    )
+    expect(userProfile).toEqual(users.bob.profile)
+  })
+})

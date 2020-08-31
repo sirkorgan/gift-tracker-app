@@ -1,49 +1,34 @@
 import React from 'react'
-import auth0 from '../lib/auth0/auth0'
 
-import { GetServerSideProps } from 'next'
 import withAuth from '../components/with-auth'
 import Layout from '../components/layout'
-import { useFetchUser } from '../lib/auth0/user'
+import { createUserAPI } from '../lib/api/user-api'
 
 const Profile = (props) => {
-  const [state, setState] = React.useState({ session: undefined })
+  const [state, setState] = React.useState({})
+
+  const api = React.useMemo(() => {
+    return createUserAPI(props.user.fauna_token)
+  }, [props.user.fauna_token])
 
   React.useEffect(() => {
     ;(async () => {
-      const res = await fetch('/api/me')
-      if (res.ok) {
-        setState({
-          session: await res.json(),
-        })
-      }
+      const appUser = await api.getUserByEmail(props.user.email)
+      const appProfile = await api.getUserProfileById(appUser.profileId)
+      setState({
+        appUser,
+        appProfile,
+      })
     })()
-  }, [])
-
-  const { user, loading } = useFetchUser()
+  }, [api, props.user.email])
 
   return (
-    <Layout user={user} loading={loading}>
+    <Layout user={props.user}>
       <pre>{JSON.stringify(props.user, undefined, 2)}</pre>
       <pre>{JSON.stringify(state, undefined, 2)}</pre>
-
       <a href="/api/logout">Logout</a>
     </Layout>
   )
 }
-
-// Profile.getInitialProps = async ({ req, res }) => {
-//   if (typeof window === 'undefined') {
-//     const session = await auth0.getSession(req)
-//     if (!session || !session.user) {
-//       res.writeHead(302, {
-//         Location: '/api/login',
-//       })
-//       res.end()
-//       return
-//     }
-//     return { user: session.user }
-//   }
-// }
 
 export default withAuth(Profile)

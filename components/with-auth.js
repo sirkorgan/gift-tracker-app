@@ -27,9 +27,9 @@ export default function withAuth(InnerComponent) {
       return { user: session.user }
     }
 
-    constructor(props) {
-      super(props)
-    }
+    // constructor(props) {
+    //   super(props)
+    // }
 
     render() {
       if (!this.props.user) {

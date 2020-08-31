@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   verbose: true,
   displayName: 'api',
   rootDir: 'api-tests',

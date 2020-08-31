@@ -6,7 +6,6 @@ export interface TestUser {
   user: User
   profile: UserProfile
   api: UserAPI
-  token: string
 }
 
 export interface TestUsers {

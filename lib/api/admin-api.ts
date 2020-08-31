@@ -7,36 +7,11 @@ import {
   animals,
 } from 'unique-names-generator'
 
-import { UserProfile, User } from '../types/domain-types'
-import { UserAPI, AdminAPI } from '../types/api-types'
+import { UserProfile } from '../types/domain-types'
+import { AdminAPI } from '../types/api-types'
 import { FaunaUserProfile, FaunaRef, FaunaUser } from '../types/fauna-types'
 
 const q = faunadb.query
-
-export function createUserAPI(secret: string): UserAPI {
-  const client = new faunadb.Client({ secret })
-
-  const getUserProfileByUserName = async (
-    userName: string
-  ): Promise<UserProfile> => {
-    const doc = await client.query<FaunaUserProfile>(
-      q.Get(q.Match(q.Index('profiles_by_username'), userName))
-    )
-    return { id: doc.ref.value.id, ...doc.data }
-  }
-
-  const getUserProfileById = async (id: string): Promise<UserProfile> => {
-    const doc = await client.query<FaunaUserProfile>(
-      q.Get(q.Ref(q.Collection('profiles'), id))
-    )
-    return { id: doc.ref.value.id, ...doc.data }
-  }
-
-  return {
-    getUserProfileByUserName,
-    getUserProfileById,
-  }
-}
 
 export function createAdminAPI(secret: string): AdminAPI {
   const client = new faunadb.Client({ secret })
@@ -60,9 +35,6 @@ export function createAdminAPI(secret: string): AdminAPI {
 
   const getIdFromRef = (ref: FaunaRef) => ref.value.id
 
-  const makeRef = (collection: string, id: string) =>
-    q.Ref(q.Collection(collection), id)
-
   // api functions
 
   const getUserByEmail = async (email) => {
@@ -81,18 +53,68 @@ export function createAdminAPI(secret: string): AdminAPI {
     return { id: getIdFromRef(doc.ref), ...doc.data }
   }
 
-  const getUserTokenByEmail = async (email: string) => {
-    const doc = await client.query<any>(
-      q.Get(q.Match(q.Index('tokens_issued_by_email'), email))
+  const getUserTokensByEmail = async (email: string) => {
+    const page = await client.paginate(
+      q.Match(q.Index('tokens_issued_by_email'), email)
     )
-    return doc.data.token
+    const tokens: string[] = []
+    page.each(async (page: any[]) => {
+      for (const tokenIssuedRef of page) {
+        const issued: any = await client.query(q.Get(tokenIssuedRef))
+        tokens.push(issued.data.token)
+      }
+    })
+    console.log('getUserTokensByEmail', tokens)
+    return tokens
+  }
+
+  const loginUser = async (
+    email: string
+  ): Promise<{ ref: FaunaRef; secret: string }> => {
+    const user = await getUserByEmail(email)
+    // issue a token
+    // save token in issued_tokens
+    const token = await client.query<any>(
+      q.Create(q.Tokens(), {
+        instance: q.Ref(q.Collection('users'), user.id),
+      })
+    )
+
+    // Save the token in tokens_issued collection so that it can be
+    // removed later.
+    await client.query(
+      q.Create(q.Collection('tokens_issued'), {
+        data: {
+          email,
+          token: token.ref,
+        },
+      })
+    )
+
+    return { ref: token.ref, secret: token.secret }
+  }
+
+  const logoutUser = async (email: string): Promise<void> => {
+    // TODO: do this in one query with q.Lambda()
+    const tokensIssued = await client.paginate(
+      q.Match(q.Index('tokens_issued_by_email'), email)
+    )
+    await tokensIssued.each(async (page: any[]) => {
+      for (const tokenIssuedRef of page) {
+        // delete each token
+        const issued: any = await client.query(q.Get(tokenIssuedRef))
+        await client.query(q.Delete(issued.data.token))
+        await client.query(q.Delete(tokenIssuedRef))
+      }
+    })
   }
 
   const profileExists = async (userName: string) => {
-    return await client.query<boolean>(
-      // Get will throw if nothing is found.
+    const exists = await client.query<boolean>(
       q.Exists(q.Match(q.Index('profiles_by_username'), userName))
     )
+    // console.log(`${userName} exists?`, exists)
+    return exists
   }
 
   const createUserAndProfile = async (email) => {
@@ -146,20 +168,15 @@ export function createAdminAPI(secret: string): AdminAPI {
 
   async function updateUserProfileName(
     profileId: string,
-    userToken: string,
     newName: string
   ): Promise<UserProfile> {
     // TODO: rbac policy: only user can modify own profile
 
     // find unique username using new name by changing hashcode
     const profile = await getUserProfileById(profileId)
-
-    // TODO: verify userToken belongs to userId associated with the profile
-
     let hashCode = profile.hashCode
     let newUserName = makeUsername(newName, hashCode)
-
-    while (true === (await profileExists(newUserName))) {
+    while (await profileExists(newUserName)) {
       hashCode = generateUserProfileHashCode()
       newUserName = makeUsername(newName, hashCode)
     }
@@ -181,7 +198,9 @@ export function createAdminAPI(secret: string): AdminAPI {
   return {
     getUserByEmail,
     getUserProfileById,
-    getUserTokenByEmail,
+    getUserTokensByEmail,
+    loginUser,
+    logoutUser,
     profileExists,
     createUserAndProfile,
     updateUserProfileName,

@@ -1,6 +1,8 @@
 import { UserProfile, User, Occasion } from './domain-types'
+import { FaunaRef } from './fauna-types'
 
 export interface UserAPI {
+  getUserByEmail: (email: string) => Promise<User>
   getUserProfileByUserName: (userName: string) => Promise<UserProfile>
   getUserProfileById: (id: string) => Promise<UserProfile>
   /**
@@ -33,10 +35,22 @@ export interface AdminAPI {
   getUserByEmail: (email: string) => Promise<User>
   getUserProfileById: (profileId: string) => Promise<UserProfile>
   /**
-   * Returns Ref of Token issued for user.
+   * Returns array of token Refs issued for the user with the given email
+   * address.
    * @param email
    */
-  getUserTokenByEmail: (email: string) => Promise<string>
+  getUserTokensByEmail: (email: string) => Promise<string[]>
+  /**
+   * Logs in the user with the given email address.
+   *  - Creates a new token and returns the secret. Can be used to
+   *    programmatically perform actions as that user.
+   */
+  loginUser: (email: string) => Promise<{ secret: string }>
+  /**
+   * Logs out the user with the given email address.
+   *  - Removes all tokens issued to that user.
+   */
+  logoutUser: (email: string) => Promise<void>
   profileExists: (userName: string) => Promise<boolean>
   createUserAndProfile: (
     email: string
@@ -47,7 +61,6 @@ export interface AdminAPI {
    */
   updateUserProfileName: (
     profileId: string,
-    userToken: string,
     name: string
   ) => Promise<UserProfile>
 }

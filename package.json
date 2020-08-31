@@ -2,7 +2,6 @@
   "name": "gift-tracker-app",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +12,7 @@
     "test:api": "npx jest --config jest-api.config.js --runInBand"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^0.13.0",
+    "@auth0/nextjs-auth0": "^0.16.0",
     "@k-foss/ts-esnode": "^1.6.0",
     "babel-eslint": "^10.0.0",
     "chalk": "^4.1.0",
@@ -25,12 +24,12 @@
     "eslint-plugin-jsx-a11y": "^6.0.0",
     "eslint-plugin-react": "^7.0.0",
     "eslint-plugin-react-hooks": "^2.0.0",
-    "faunadb": "^2.14.2",
+    "faunadb": "^3.0.1",
     "jest": "^26.1.0",
-    "next": "9.4.4",
+    "next": "^9.5.2",
     "react": "16.13.1",
     "react-dom": "16.13.1",
-    "react-query": "^1.5.7",
+    "react-query": "^2.12.1",
     "react-query-devtools": "^1.1.17",
     "ts-node": "^8.10.2",
     "unique-names-generator": "^4.2.0"

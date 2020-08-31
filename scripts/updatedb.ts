@@ -2,7 +2,8 @@ import faunadb from 'faunadb'
 
 import { AdminAPI } from '../lib/types/api-types'
 import { TestUser, TestUsers } from '../lib/types/api-test-types'
-import { createUserAPI, createAdminAPI } from '../lib/api/fauna-api'
+import { createAdminAPI } from '../lib/api/admin-api'
+import { createUserAPI } from '../lib/api/user-api'
 
 /** True if we are running as a script rather than a module */
 const isCLI = () => {
@@ -38,6 +39,9 @@ const {
   Collection,
   Index,
   Identity,
+  Ref,
+  Role,
+  CreateRole,
 } = faunadb.query
 
 const collections: any = [
@@ -84,7 +88,7 @@ const indexes = [
     params: {
       source: 'profiles',
       unique: true,
-      terms: [{ field: ['data', 'username'] }],
+      terms: [{ field: ['data', 'userName'] }],
     },
   },
   {
@@ -136,7 +140,32 @@ const roles = {
     create: true,
     update: true,
     params: {
+      membership: [{ resource: 'users' }],
       privileges: [
+        {
+          resource: { type: 'collection', name: 'users' },
+          actions: {
+            read: Query(
+              Lambda('userRef', Equals(Get(Var('userRef')), Get(Identity())))
+            ),
+          },
+        },
+        {
+          resource: { type: 'index', name: 'users_by_email' },
+          actions: {
+            read: true,
+          },
+        },
+        {
+          resource: { type: 'collection', name: 'profiles' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'profiles_by_username' },
+          actions: {
+            read: true,
+          },
+        },
         {
           resource: { type: 'collection', name: 'occasions' },
           actions: {
@@ -148,24 +177,7 @@ const roles = {
             delete: false,
           },
         },
-        {
-          resource: { type: 'collection', name: 'profiles' },
-          actions: { read: true },
-        },
-        {
-          resource: { type: 'collection', name: 'users' },
-          actions: {
-            read: Query(
-              Lambda('userRef', Equals(Get(Var('userRef')), Get(Identity())))
-            ),
-          },
-        },
-        {
-          resource: { type: 'index', name: 'all_users' },
-          actions: { read: true },
-        },
       ],
-      membership: [{ resource: 'users' }],
     },
   },
 }
@@ -348,49 +360,124 @@ async function doIndexes(indexes = [], client: faunadb.Client) {
   console.log('Indexes - done')
 }
 
-export async function createTestUsers(target): Promise<TestUsers> {
+export async function doRoles(roles = {}, client: faunadb.Client) {
+  let rolesArray = Object.keys(roles).map((userColl) => {
+    roles[userColl].name = roles[userColl].name || userColl
+    roles[userColl].params = roles[userColl].params || {}
+    roles[userColl].params.name = roles[userColl].params.name || userColl
+    return roles[userColl]
+  })
+
+  const promises = rolesArray.map(async (role) => {
+    role.params.privileges &&
+      role.params.privileges.map((priv) => {
+        if (typeof priv.resource === 'object' && priv.resource.type) {
+          switch (priv.resource.type) {
+            case 'collection':
+              priv.resource = Collection(priv.resource.name)
+              break
+            case 'index':
+              priv.resource = Index(priv.resource.name)
+              break
+            case 'function':
+              priv.resource = Ref(Ref('functions'), priv.resource.name)
+              break
+          }
+        }
+      })
+
+    role.params.membership &&
+      role.params.membership.map((mem) => {
+        if (typeof mem.resource === 'string')
+          mem.resource = Collection(mem.resource)
+      })
+
+    return await client
+      .query(
+        Map(
+          [role],
+          Lambda(
+            'role',
+            Let(
+              {
+                create: Select(['create'], Var('role'), true),
+                update: Select(['update'], Var('role'), true),
+                remove: Select(['remove'], Var('role'), false),
+                params: Select(['params'], Var('role')),
+                name: Select(['name'], Var('role')),
+                exist: Exists(Role(Var('name'))),
+              },
+              If(
+                Var('remove'),
+                If(
+                  Var('exist'),
+                  Delete(Role(Var('name'))),
+                  Abort('No user-role for remove')
+                ),
+                If(
+                  And(Var('create'), Not(Var('exist'))),
+                  CreateRole(Var('params')),
+                  If(
+                    And(Var('update'), Var('exist')),
+                    Update(Role(Var('name')), Var('params')),
+                    Abort('No actions for user-role')
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      .then((res) => {
+        console.log('Role', role.name + ' - done')
+        return res
+      })
+      .catch((err) => {
+        console.error(err)
+        throw err
+      })
+  })
+
+  return Promise.all(promises)
+    .then((res) => {
+      console.log(`Roles - done`)
+      return res
+    })
+    .catch((err) => console.log('Promises all Roles error :', err))
+}
+
+export async function createTestUsers(target): Promise<void> {
   try {
     const createTestUser = async (
-      testClient: faunadb.Client,
       adminApi: AdminAPI,
       name: string
-    ): Promise<TestUser> => {
-      const email = `${name}@fakemail.com`
-      const userData = await adminApi.createUserAndProfile(email)
-      const userToken = await testClient.query<any>(
-        q.Create(q.Tokens(), {
-          instance: q.Ref(q.Collection('users'), userData.user.id),
-        })
-      )
-      // save userToken in tokens_issue just like they logged in normally
-      await testClient.query(
-        q.Create(q.Collection('tokens_issued'), {
-          data: {
-            email,
-            token: userToken.ref,
-          },
-        })
-      )
-      const api = createUserAPI(userToken.secret)
-      const testUser: TestUser = {
-        user: userData.user,
-        profile: userData.profile,
-        api,
-        token: userToken.secret,
+    ): Promise<void> => {
+      try {
+        const email = `${name}@fakemail.com`
+        if (Boolean(await adminApi.getUserByEmail(email))) {
+          console.log(`User ${name} already exists`)
+          return
+        }
+        const userData = await adminApi.createUserAndProfile(email)
+        const userToken = await adminApi.loginUser(email)
+        const api = createUserAPI(userToken.secret)
+        const testUser: TestUser = {
+          user: userData.user,
+          profile: userData.profile,
+          api,
+        }
+        console.log(
+          `Created user ${testUser.user.email} - ${testUser.profile.userName}`
+        )
+      } catch (err) {
+        console.error(`Could not create test user ${name}:`, err)
       }
-      console.log(
-        `Created user ${testUser.user.email} - ${testUser.profile.userName}`
-      )
-      return testUser
     }
 
-    const testClient = new faunadb.Client({ secret: target })
     const adminApi = createAdminAPI(target)
-
-    return {
-      alice: await createTestUser(testClient, adminApi, 'alice'),
-      bob: await createTestUser(testClient, adminApi, 'bob'),
-      carol: await createTestUser(testClient, adminApi, 'carol'),
+    const users = ['alice', 'bob', 'carol']
+    for (const name of users) {
+      await createTestUser(adminApi, name)
     }
   } catch (err) {
     console.error(`Failed to create testusers:`, err)
@@ -403,10 +490,11 @@ export async function updateDb(secret) {
   const json = {
     collections,
     indexes,
-    // roles
+    roles,
   }
   await doCollections(json.collections, client)
   await doIndexes(json.indexes, client)
+  await doRoles(json.roles, client)
 }
 
 /**
