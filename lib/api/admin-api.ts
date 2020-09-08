@@ -7,13 +7,14 @@ import {
   animals,
 } from 'unique-names-generator'
 
-import { UserProfile } from '../types/domain-types'
-import { AdminAPI } from '../types/api-types'
+import { UserProfile, Participant } from '../types/domain-types'
+import { IAdminAPI } from '../types/api-types'
 import { FaunaUserProfile, FaunaRef, FaunaUser } from '../types/fauna-types'
+import { createFaunaUserAPI } from './user-api'
 
 const q = faunadb.query
 
-export function createAdminAPI(secret: string): AdminAPI {
+export function createFaunaAdminAPI(secret: string): IAdminAPI {
   const client = new faunadb.Client({ secret })
 
   // private utils
@@ -58,7 +59,7 @@ export function createAdminAPI(secret: string): AdminAPI {
       q.Match(q.Index('tokens_issued_by_email'), email)
     )
     const tokens: string[] = []
-    page.each(async (page: any[]) => {
+    await page.each(async (page: any[]) => {
       for (const tokenIssuedRef of page) {
         const issued: any = await client.query(q.Get(tokenIssuedRef))
         tokens.push(issued.data.token)
@@ -66,6 +67,23 @@ export function createAdminAPI(secret: string): AdminAPI {
     })
     console.log('getUserTokensByEmail', tokens)
     return tokens
+  }
+
+  const verifySecret = async (
+    email: string,
+    secret: string
+  ): Promise<boolean> => {
+    // verify that the given secret is valid for the account with the given email
+    const api = createFaunaAdminAPI(secret)
+    try {
+      api.getUserByEmail(email)
+    } catch (err) {
+      // this will throw if:
+      //  - there is no user
+      //  - the secret is not for the given user
+      return false
+    }
+    return true
   }
 
   const loginUser = async (
@@ -113,7 +131,13 @@ export function createAdminAPI(secret: string): AdminAPI {
     const exists = await client.query<boolean>(
       q.Exists(q.Match(q.Index('profiles_by_username'), userName))
     )
-    // console.log(`${userName} exists?`, exists)
+    return exists
+  }
+
+  const userExists = async (email: string) => {
+    const exists = await client.query<boolean>(
+      q.Exists(q.Match(q.Index('users_by_email'), email))
+    )
     return exists
   }
 
@@ -195,14 +219,24 @@ export function createAdminAPI(secret: string): AdminAPI {
     return await getUserProfileById(profile.id)
   }
 
+  async function addParticipant(
+    participantProfileId: string,
+    occasionId: string
+  ): Promise<Participant> {
+    throw new Error('not implemented')
+  }
+
   return {
     getUserByEmail,
     getUserProfileById,
     getUserTokensByEmail,
+    verifySecret,
     loginUser,
     logoutUser,
     profileExists,
+    userExists,
     createUserAndProfile,
     updateUserProfileName,
+    addParticipant,
   }
 }

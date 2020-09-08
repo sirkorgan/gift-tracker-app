@@ -1,11 +1,12 @@
 module.exports = {
   verbose: true,
   displayName: 'api',
-  rootDir: 'api-tests',
+  rootDir: '.',
   transform: {
     '^.+\\.(ts|tsx)$': 'babel-jest',
   },
   setupFiles: ['dotenv/config'],
+  setupFilesAfterEnv: ['./jest-api.setup.js'],
 }
 
 /*

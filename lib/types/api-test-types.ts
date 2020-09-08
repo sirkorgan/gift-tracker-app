@@ -1,11 +1,12 @@
 import { UserProfile, User } from './domain-types'
-import { UserAPI } from './api-types'
+import { IUserAPI } from './api-types'
+
 // for testing
 
 export interface TestUser {
   user: User
   profile: UserProfile
-  api: UserAPI
+  api: IUserAPI
 }
 
 export interface TestUsers {

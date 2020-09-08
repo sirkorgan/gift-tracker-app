@@ -9,7 +9,7 @@
     "createdb": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/createdb.ts",
     "updatedb": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/updatedb.ts",
     "test-fauna-client": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/test-fauna-api.ts",
-    "test:api": "npx jest --config jest-api.config.js --runInBand"
+    "test:api": "npx jest --config api-tests/jest-api.config.js --runInBand"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^0.16.0",

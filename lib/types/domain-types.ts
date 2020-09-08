@@ -50,7 +50,7 @@ export interface User {
  *    via API.
  *
  * Read:
- *  - User can read own profile.
+ *  - User can read any profile.
  *
  * Write:
  *  - User can change own name via function, which recalculates userName and
@@ -126,18 +126,19 @@ export interface Occasion {
  *  - User can change their nickname.
  *
  * Create:
- *  - Created when a user accepts an Invitation.
+ *  - Created when a user accepts an Invitation (via function)
+ *  - Created when an organizer accepts a SignupRequest (via function)
  *
  * Delete:
  *  - Organizer can remove a participant using a function.
  *  - User can remove their participant status using a function.
  */
-export interface Partcipant {
+export interface Participant {
   id?: string
   occasionId: string
   profileId: string
   /**
-   * Particpant may use custom nickname for an Occasion.
+   * Participant may use custom nickname for an Occasion.
    */
   nickname?: string
 }
@@ -187,10 +188,12 @@ export interface Invitation {
  *  - None
  *
  * Create:
- *  - Users via function
+ *  - Anyone
+ *  - Use index to enforce one SignupRequest per profile per occasion
  *
  * Delete:
  *  - Organizers (refuse) and users (withdraw)
+ *  - System should delete signup request after particpant has been added.
  */
 export interface SignupRequest {
   id?: string
@@ -259,9 +262,11 @@ export interface Gift {
  *
  * Delete:
  *  - The user who created the claim on a gift may delete that claim.
+ *  - The occasion organizer may delete the claim.
  */
 export interface Claim {
   id?: string
+  occasionId: string
   giftId: string
   /**
    * True if other users should not be able to see who made this claim.

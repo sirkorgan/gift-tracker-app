@@ -1,4 +1,4 @@
-import { User, UserProfile } from './domain-types'
+import { User, UserProfile, Occasion } from './domain-types'
 
 export interface FaunaRef {
   value: {
@@ -14,4 +14,9 @@ export interface FaunaUser {
 export interface FaunaUserProfile {
   ref?: FaunaRef
   data: UserProfile
+}
+
+export interface FaunaOccasion {
+  ref?: FaunaRef
+  data: Occasion
 }

@@ -1,37 +1,45 @@
-import { UserProfile, User, Occasion } from './domain-types'
-import { FaunaRef } from './fauna-types'
+import { UserProfile, User, Occasion, Participant } from './domain-types'
 
-export interface UserAPI {
+export interface IUserAPI {
   getUserByEmail: (email: string) => Promise<User>
   getUserProfileByUserName: (userName: string) => Promise<UserProfile>
   getUserProfileById: (id: string) => Promise<UserProfile>
+
+  // PARTICIPANTS
+
+  // OCCASIONS
+
+  /**
+   * Current user will become the organizer of the new occasion.
+   */
+  createOccasion: (params: {
+    title: string
+    description?: string
+    allowSignups?: boolean
+  }) => Promise<Occasion>
+  /**
+   * Only organizer can delete an occasion. All associated documents will also
+   * be deleted.
+   */
+  deleteOccasion: (occasionId: string) => Promise<void>
   /**
    * Only return occasion if the current user is orgnaizing or particpating.
    */
-  // getOccasionById: (id: string) => Promise<Occasion>
+  getOccasionById: (id: string) => Promise<Occasion>
   /**
    *  Only return occasions if the organizer is the current user.
    */
-  // getOccasionByOrganizer: (profileId: string) => Promise<Occasion>
+  getOccasionsByOrganizer: (profileId: string) => Promise<Occasion[]>
   /**
    * Allow only organizer to change:
    *  - title
    *  - description
    *  - allowSignups
    */
-  // updateOccasion: (occasion: Occasion) => Promise<Occasion>
-  /**
-   * Current user will become the organizer of the new occasion.
-   */
-  // createOccasion: (occassion: Occasion) => Promise<Occasion>
-  /**
-   * Only organizer can delete an occasion. All associated documents will also
-   * be deleted.
-   */
-  // deleteOccasion: (occasionId: string) => void
+  updateOccasion: (occasion: Occasion) => Promise<Occasion>
 }
 
-export interface AdminAPI {
+export interface IAdminAPI {
   getUserByEmail: (email: string) => Promise<User>
   getUserProfileById: (profileId: string) => Promise<UserProfile>
   /**
@@ -40,6 +48,11 @@ export interface AdminAPI {
    * @param email
    */
   getUserTokensByEmail: (email: string) => Promise<string[]>
+  /**
+   * Returns true if the given secret is valid for the user with the given email
+   * address.
+   */
+  verifySecret: (email: string, secret: string) => Promise<boolean>
   /**
    * Logs in the user with the given email address.
    *  - Creates a new token and returns the secret. Can be used to
@@ -51,6 +64,7 @@ export interface AdminAPI {
    *  - Removes all tokens issued to that user.
    */
   logoutUser: (email: string) => Promise<void>
+  userExists: (email: string) => Promise<boolean>
   profileExists: (userName: string) => Promise<boolean>
   createUserAndProfile: (
     email: string
@@ -63,4 +77,19 @@ export interface AdminAPI {
     profileId: string,
     name: string
   ) => Promise<UserProfile>
+
+  // PARTICIPANTS
+
+  /**
+   * Adds the participant to the occasion if either:
+   *  - an Invitation exists and is accepted
+   *  - a SignupRequest exists
+   *
+   * After adding the particpant, any related SignupRequest or Invitation should
+   * be deleted.
+   */
+  addParticipant: (
+    participantProfileId: string,
+    occasionId: string
+  ) => Promise<Participant>
 }

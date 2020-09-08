@@ -1,5 +1,5 @@
 import auth0 from '../../lib/auth0/auth0'
-import { createAdminAPI } from '../../lib/api/admin-api'
+import { createFaunaAdminAPI } from '../../lib/api/admin-api'
 import { User, UserProfile } from '../../lib/types/domain-types'
 
 // After the transaction is completed Auth0 will redirect the user back to your
@@ -11,7 +11,7 @@ export default async function callback(req, res) {
     await auth0.handleCallback(req, res, {
       redirectTo: '/',
       onUserLoaded: async (req, res, session, state) => {
-        const adminApi = createAdminAPI(process.env.FAUNA_SERVER_KEY)
+        const adminApi = createFaunaAdminAPI(process.env.FAUNA_SERVER_KEY)
 
         ///////////////////////////////////////////////////////////////////////
 

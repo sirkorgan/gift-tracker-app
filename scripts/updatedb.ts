@@ -1,9 +1,10 @@
 import faunadb from 'faunadb'
 
-import { AdminAPI } from '../lib/types/api-types'
-import { TestUser, TestUsers } from '../lib/types/api-test-types'
-import { createAdminAPI } from '../lib/api/admin-api'
-import { createUserAPI } from '../lib/api/user-api'
+import { IAdminAPI } from '../lib/types/api-types'
+import { TestUser } from '../lib/types/api-test-types'
+import { createFaunaAdminAPI } from '../lib/api/admin-api'
+import { createFaunaUserAPI } from '../lib/api/user-api'
+import { getIdentityProfileId } from '../lib/api/util'
 
 /** True if we are running as a script rather than a module */
 const isCLI = () => {
@@ -36,7 +37,9 @@ const {
   Query,
   Equals,
   Get,
+  Paginate,
   Collection,
+  Match,
   Index,
   Identity,
   Ref,
@@ -49,9 +52,11 @@ const collections: any = [
   { name: 'tokens_issued' },
   { name: 'profiles' },
   { name: 'occasions' },
+  { name: 'participants' },
   { name: 'invitations' },
-  // { name: 'gifts' },
-  // { name: 'claims' },
+  { name: 'signuprequests' },
+  { name: 'gifts' },
+  { name: 'claims' },
 ]
 
 const indexes = [
@@ -68,6 +73,14 @@ const indexes = [
     },
   },
   {
+    name: 'user_profileId',
+    params: {
+      source: 'users',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'profileId'] }],
+    },
+  },
+  {
     name: 'all_tokens_issued',
     params: { source: 'tokens_issued' },
   },
@@ -75,7 +88,6 @@ const indexes = [
     name: 'tokens_issued_by_email',
     params: {
       source: 'tokens_issued',
-      unique: false,
       terms: [{ field: ['data', 'email'] }],
     },
   },
@@ -104,6 +116,27 @@ const indexes = [
     },
   },
   {
+    name: 'occasion_organizer',
+    params: {
+      source: 'occasions',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'organizer'] }],
+    },
+  },
+  {
+    name: 'all_participants',
+    params: { source: 'participants' },
+  },
+  {
+    name: 'participants_occasionId_by_profileId',
+    params: {
+      source: 'participants',
+      unique: true,
+      terms: [{ field: ['data', 'profileId'] }],
+      values: [{ field: ['data', 'occasionId'] }],
+    },
+  },
+  {
     name: 'all_invitations',
     params: { source: 'invitations' },
   },
@@ -123,15 +156,32 @@ const indexes = [
       terms: [{ field: ['data', 'recipient'] }],
     },
   },
-  // {
-  //   name: 'all_gifts',
-  //   params: { source: 'gifts' },
-  // },
-  // {
-  //   name: 'all_claims',
-  //   params: { source: 'claims' },
-  // },
+  {
+    name: 'all_gifts',
+    params: { source: 'gifts' },
+  },
+  {
+    name: 'all_claims',
+    params: { source: 'claims' },
+  },
 ]
+
+// FUNCTIONS FOR RBAC
+
+/**
+ * Will be true if the logged in user is the organizer of the given occasion.
+ * @param occasionRef
+ */
+const userIsOrganizer = (occasionRef) =>
+  Equals(
+    getIdentityProfileId(),
+    Select(
+      ['data', 0],
+      Paginate(Match(Index('occasion_organizer'), occasionRef))
+    )
+  )
+
+// ROLES
 
 // - https://docs.fauna.com/fauna/current/api/fql/functions/createrole
 // - https://docs.fauna.com/fauna/current/security/roles
@@ -145,15 +195,7 @@ const roles = {
         {
           resource: { type: 'collection', name: 'users' },
           actions: {
-            read: Query(
-              Lambda('userRef', Equals(Get(Var('userRef')), Get(Identity())))
-            ),
-          },
-        },
-        {
-          resource: { type: 'index', name: 'users_by_email' },
-          actions: {
-            read: true,
+            read: Query(Lambda('ref', Equals(Var('ref'), Identity()))),
           },
         },
         {
@@ -161,21 +203,101 @@ const roles = {
           actions: { read: true },
         },
         {
-          resource: { type: 'index', name: 'profiles_by_username' },
+          resource: { type: 'collection', name: 'occasions' },
           actions: {
+            create: true,
             read: true,
+            write: Query(Lambda('ref', userIsOrganizer(Var('ref')))),
+            delete: Query(Lambda('ref', userIsOrganizer(Var('ref')))),
           },
         },
         {
-          resource: { type: 'collection', name: 'occasions' },
+          resource: { type: 'collection', name: 'participants' },
           actions: {
+            // created by backend
+            create: false,
+            // TODO: allowed if user is participant or organizer
             read: true,
-            create: true,
-            // participants added via backend API to accept invitations
+            // TODO: allowed if only changing nickname
             write: false,
-            // must delete using backend API to ensure proper cleanup
-            delete: false,
+            // allowed if user is the participant or organizer
+            // TODO: test me
+            delete: Query(
+              Lambda(
+                'ref',
+                Or(
+                  Equals(
+                    Select(['data', 'profileId'], Get(Var('ref'))),
+                    getIdentityProfileId()
+                  ),
+                  userIsOrganizer(Var('ref'))
+                )
+              )
+            ),
           },
+        },
+        {
+          resource: { type: 'collection', name: 'invitations' },
+          // TODO: access control
+          actions: {
+            create: true,
+            read: true,
+            write: true,
+            delete: true,
+          },
+        },
+        {
+          resource: { type: 'collection', name: 'signuprequests' },
+          // TODO: access control
+          actions: {
+            create: true,
+            read: true,
+            write: true,
+            delete: true,
+          },
+        },
+        {
+          resource: { type: 'collection', name: 'gifts' },
+          // TODO: access control
+          actions: {
+            create: true,
+            read: true,
+            write: true,
+            delete: true,
+          },
+        },
+        {
+          resource: { type: 'collection', name: 'claims' },
+          // TODO: access control
+          actions: {
+            create: true,
+            read: true,
+            write: true,
+            delete: true,
+          },
+        },
+
+        // INDEXES
+
+        {
+          resource: { type: 'index', name: 'users_by_email' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'user_profileId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'profiles_by_username' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'occasions_by_organizer' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'occasion_organizer' },
+          actions: { read: true },
         },
       ],
     },
@@ -195,7 +317,7 @@ async function doCollections(collections = [], client: faunadb.Client) {
       params.name = collection.name
       return { ...collection, params }
     })
-    .map(async (collection) => {
+    .map((collection) => async () => {
       const name = collection.params.name
       try {
         await client.query<any>(
@@ -243,8 +365,9 @@ async function doCollections(collections = [], client: faunadb.Client) {
       }
     })
 
-  // wait for all promises to resolve
-  await Promise.all(promises)
+  for (const p of promises) {
+    await p()
+  }
   console.log('Collections - done')
 }
 
@@ -370,7 +493,7 @@ export async function doRoles(roles = {}, client: faunadb.Client) {
 
   const promises = rolesArray.map(async (role) => {
     role.params.privileges &&
-      role.params.privileges.map((priv) => {
+      role.params.privileges.forEach((priv) => {
         if (typeof priv.resource === 'object' && priv.resource.type) {
           switch (priv.resource.type) {
             case 'collection':
@@ -387,7 +510,7 @@ export async function doRoles(roles = {}, client: faunadb.Client) {
       })
 
     role.params.membership &&
-      role.params.membership.map((mem) => {
+      role.params.membership.forEach((mem) => {
         if (typeof mem.resource === 'string')
           mem.resource = Collection(mem.resource)
       })
@@ -449,32 +572,28 @@ export async function doRoles(roles = {}, client: faunadb.Client) {
 export async function createTestUsers(target): Promise<void> {
   try {
     const createTestUser = async (
-      adminApi: AdminAPI,
+      adminApi: IAdminAPI,
       name: string
     ): Promise<void> => {
-      try {
-        const email = `${name}@fakemail.com`
-        if (Boolean(await adminApi.getUserByEmail(email))) {
-          console.log(`User ${name} already exists`)
-          return
-        }
-        const userData = await adminApi.createUserAndProfile(email)
-        const userToken = await adminApi.loginUser(email)
-        const api = createUserAPI(userToken.secret)
-        const testUser: TestUser = {
-          user: userData.user,
-          profile: userData.profile,
-          api,
-        }
-        console.log(
-          `Created user ${testUser.user.email} - ${testUser.profile.userName}`
-        )
-      } catch (err) {
-        console.error(`Could not create test user ${name}:`, err)
+      const email = `${name}@fakemail.com`
+      if (await adminApi.userExists(email)) {
+        console.log(`User ${name} already exists`)
+        return
       }
+      const userData = await adminApi.createUserAndProfile(email)
+      const userToken = await adminApi.loginUser(email)
+      const api = createFaunaUserAPI(userToken.secret)
+      const testUser: TestUser = {
+        user: userData.user,
+        profile: userData.profile,
+        api,
+      }
+      console.log(
+        `Created user ${testUser.user.email} - ${testUser.profile.userName}`
+      )
     }
 
-    const adminApi = createAdminAPI(target)
+    const adminApi = createFaunaAdminAPI(target)
     const users = ['alice', 'bob', 'carol']
     for (const name of users) {
       await createTestUser(adminApi, name)
@@ -523,39 +642,43 @@ export async function cleanDb(secret) {
 }
 
 async function work() {
-  const getTarget = (arg) => {
-    switch (arg) {
-      case 'prod':
-        return process.env.FAUNA_ADMIN_KEY
-      case 'test':
-        return process.env.TESTDB_SECRET
-      default:
-        console.error('Unknown DB target: ' + arg)
-        return undefined
+  try {
+    const getTarget = (arg) => {
+      switch (arg) {
+        case 'prod':
+          return process.env.FAUNA_ADMIN_KEY
+        case 'test':
+          return process.env.TESTDB_SECRET
+        default:
+          console.error('Unknown DB target: ' + arg)
+          return undefined
+      }
     }
-  }
 
-  let targetArg
-  if (process.argv.length >= 2) {
-    targetArg = process.argv[2]
-  }
-
-  let shouldClean = false
-  if (process.argv.length >= 3) {
-    shouldClean = Boolean(process.argv[3])
-  }
-
-  const target = getTarget(targetArg)
-  if (!target) {
-    console.log(`Must provide target as argument: "prod" or "test"`)
-  } else {
-    if (shouldClean) {
-      await cleanDb(target)
-      console.log('Waiting 1 minute for names to be released.')
-      await delay(60 * 1000)
+    let targetArg
+    if (process.argv.length >= 2) {
+      targetArg = process.argv[2]
     }
-    await updateDb(target)
-    if (targetArg === 'test') await createTestUsers(target)
+
+    let shouldClean = false
+    if (process.argv.length >= 3) {
+      shouldClean = Boolean(process.argv[3])
+    }
+
+    const target = getTarget(targetArg)
+    if (!target) {
+      console.log(`Must provide target as argument: "prod" or "test"`)
+    } else {
+      if (shouldClean) {
+        await cleanDb(target)
+        console.log('Waiting 1 minute for names to be released.')
+        await delay(60 * 1000)
+      }
+      await updateDb(target)
+      if (targetArg === 'test') await createTestUsers(target)
+    }
+  } catch (err) {
+    console.error(err)
   }
 }
 if (isCLI()) {
