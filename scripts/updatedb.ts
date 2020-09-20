@@ -157,6 +157,22 @@ const indexes = [
     },
   },
   {
+    name: 'signuprequests_by_profileId',
+    params: {
+      source: 'signuprequests',
+      unique: true,
+      terms: [{ field: ['data', 'profileId'] }],
+    },
+  },
+  {
+    name: 'signuprequests_by_occasionId',
+    params: {
+      source: 'signuprequests',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+    },
+  },
+  {
     name: 'all_gifts',
     params: { source: 'gifts' },
   },
@@ -297,6 +313,22 @@ const roles = {
         },
         {
           resource: { type: 'index', name: 'occasion_organizer' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'signuprequests_by_profileId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'signuprequests_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'invitations_by_sender' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'invitations_by_recipient' },
           actions: { read: true },
         },
       ],

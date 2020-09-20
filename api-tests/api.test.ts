@@ -35,7 +35,7 @@ async function loadTestUsers(): Promise<TestUsers> {
 }
 
 describe('admin tests', () => {
-  test('Alice can change her profile name', async () => {
+  test('Can change user profile name', async () => {
     const alice = await loadUser('alice@fakemail.com')
     const newProfile = await admin.updateUserProfileName(
       alice.profile.id,
@@ -81,37 +81,61 @@ describe('user tests', () => {
 
   // OCCASIONS
 
-  describe.only('occasions', () => {
-    test('create', async () => {
-      occasion = await users.alice.api.createOccasion({
-        title: 'my thing',
-        description: 'super cool',
-        allowSignups: false,
-      })
-      expect(occasion.id).toBeTruthy()
+  test('create occasion', async () => {
+    occasion = await users.alice.api.createOccasion({
+      title: 'my thing',
+      description: 'super cool',
+      allowSignups: false,
     })
-
-    test(`can't delete other's occasion`, async () => {
-      await expect(users.bob.api.deleteOccasion(occasion.id)).rejects.toThrow()
-    })
-
-    test('delete own occasion', async () => {
-      await expect(
-        users.alice.api.deleteOccasion(occasion.id)
-      ).resolves.not.toThrow()
-      occasion = null
-    })
-
-    afterAll(async () => {
-      // cleanup if a test fails before we get to the delete
-      if (occasion) {
-        await users.alice.api.deleteOccasion(occasion.id)
-      }
-    })
+    expect(occasion.id).toBeTruthy()
   })
 
-  // test('test', async () => {})
-  // test('test', async () => {})
-  // test('test', async () => {})
-  // test('test', async () => {})
+  test(`can't delete other's occasion`, async () => {
+    await expect(users.bob.api.deleteOccasion(occasion.id)).rejects.toThrow()
+  })
+
+  // TODO: deleting an occassion should delete alot of other stuff too, need to verify
+  test('delete own occasion', async () => {
+    await expect(
+      users.alice.api.deleteOccasion(occasion.id)
+    ).resolves.not.toThrow()
+    occasion = null
+  })
+
+  test('alice creates occasion', async () => {
+    occasion = await users.alice.api.createOccasion({
+      title: 'my new thing',
+      description: 'super duper cool',
+      allowSignups: true,
+    })
+    expect(occasion.id).toBeTruthy()
+  })
+
+  test('alice invites bob', async () => {
+    const invitation = await users.alice.api.createInvitation(
+      occasion.id,
+      users.bob.profile.id
+    )
+    expect(invitation.id).toBeTruthy()
+  })
+
+  test('carol signs up', async () => {
+    const signup = await users.carol.api.createSignupRequest(occasion.id)
+    expect(signup.id).toBeTruthy()
+  })
+
+  // TODO: signups and invitations
+  // - check alice sent invitations
+  // - check bob received invitations
+  // - check alice received signups
+  // - check carol sent signups
+
+  // TODO: gifts
+
+  // TODO: claims
+
+  // TODO: needs manual testing as api route:
+  //  - user request to change name
+  //  - user interact with invitation
+  //  - organizer accept signup request
 })

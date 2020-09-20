@@ -1,12 +1,19 @@
 import faunadb from 'faunadb'
 
-import { UserProfile, Occasion } from '../types/domain-types'
+import {
+  UserProfile,
+  Occasion,
+  SignupRequest,
+  Invitation,
+} from '../types/domain-types'
 import { IUserAPI } from '../types/api-types'
 import {
   FaunaUserProfile,
   FaunaRef,
   FaunaUser,
   FaunaOccasion,
+  FaunaSignupRequest,
+  FaunaInvitation,
 } from '../types/fauna-types'
 import { getIdentityProfileId } from './util'
 
@@ -132,6 +139,81 @@ export class FaunaUserAPI implements IUserAPI {
       })
     )
     return unwrapWithId(doc)
+  }
+
+  createSignupRequest = async (occasionId: string): Promise<SignupRequest> => {
+    const profileId: string = await this.client.query(getIdentityProfileId())
+    const doc = await this.client.query<FaunaSignupRequest>(
+      q.Create(q.Collection('signuprequests'), {
+        data: {
+          occasionId,
+          profileId,
+        },
+      })
+    )
+    return unwrapWithId(doc)
+  }
+  getSentSignupRequests = async (): Promise<SignupRequest[]> => {
+    const pageHelper = this.client
+      .paginate(
+        q.Match(q.Index('signuprequests_by_profileId'), getIdentityProfileId())
+      )
+      .map((ref) => q.Get(ref))
+    return unwrapPages(pageHelper)
+  }
+  getReceivedSignupRequests = async (): Promise<SignupRequest[]> => {
+    const pageHelper = this.client
+      .paginate(
+        q.Join(
+          // source set (index values to be used as terms of another index)
+          q.Match(q.Index('occasions_by_organizer'), getIdentityProfileId()),
+          // use items of source set to read from another index
+          q.Lambda(
+            'ref',
+            q.Match(
+              q.Index('signuprequests_by_occasionId'),
+              q.Select(['id'], q.Var('ref'))
+            )
+          )
+        )
+      )
+      .map((ref) => q.Get(ref))
+    return unwrapPages(pageHelper)
+  }
+  deleteSignupRequest = async (signupRequestId: string): Promise<void> => {
+    await this.client.query(
+      q.Delete(q.Ref(q.Collection('signuprequests'), signupRequestId))
+    )
+  }
+
+  createInvitation = async (
+    occasionId: string,
+    recipient: string
+  ): Promise<Invitation> => {
+    const sender: string = await this.client.query(getIdentityProfileId())
+    const doc = await this.client.query<FaunaInvitation>(
+      q.Create(q.Collection('invitations'), {
+        data: {
+          occasionId,
+          sender,
+          recipient,
+        },
+      })
+    )
+    return unwrapWithId(doc)
+  }
+  getSentInvitations = async (): Promise<Invitation[]> => {
+    // TODO:
+    return null
+  }
+  getReceivedInvitations = async (): Promise<Invitation[]> => {
+    // TODO:
+    return null
+  }
+  deleteInvitation = async (invitationId: string): Promise<void> => {
+    await this.client.query(
+      q.Delete(q.Ref(q.Collection('invitations'), invitationId))
+    )
   }
 }
 

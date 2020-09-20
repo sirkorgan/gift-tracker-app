@@ -1,11 +1,16 @@
-import { UserProfile, User, Occasion, Participant } from './domain-types'
+import {
+  UserProfile,
+  User,
+  Occasion,
+  Participant,
+  SignupRequest,
+  Invitation,
+} from './domain-types'
 
 export interface IUserAPI {
   getUserByEmail: (email: string) => Promise<User>
   getUserProfileByUserName: (userName: string) => Promise<UserProfile>
   getUserProfileById: (id: string) => Promise<UserProfile>
-
-  // PARTICIPANTS
 
   // OCCASIONS
 
@@ -30,13 +35,40 @@ export interface IUserAPI {
    *  Only return occasions if the organizer is the current user.
    */
   getOccasionsByOrganizer: (profileId: string) => Promise<Occasion[]>
-  /**
-   * Allow only organizer to change:
-   *  - title
-   *  - description
-   *  - allowSignups
-   */
   updateOccasion: (occasion: Occasion) => Promise<Occasion>
+
+  // SIGNUP
+
+  createSignupRequest: (occasionId: string) => Promise<SignupRequest>
+  /**
+   * Return all requests sent by the logged in user.
+   */
+  getSentSignupRequests: () => Promise<SignupRequest[]>
+  /**
+   * Return all signup requests for all occasions for which the logged in user
+   * is the organizer.
+   */
+  getReceivedSignupRequests: () => Promise<SignupRequest[]>
+  deleteSignupRequest: (signupRequestId: string) => Promise<void>
+
+  // INVITATION
+
+  createInvitation: (
+    occasionId: string,
+    profileId: string
+  ) => Promise<Invitation>
+  getSentInvitations: () => Promise<Invitation[]>
+  getReceivedInvitations: () => Promise<Invitation[]>
+  deleteInvitation: (invitationId: string) => Promise<void>
+
+  // PARTICIPANTS
+  // TODO:
+
+  // GIFTS
+  // TODO:
+
+  // CLAIMS
+  // TODO:
 }
 
 export interface IAdminAPI {
