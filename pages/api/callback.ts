@@ -1,3 +1,4 @@
+import { NextApiRequest, NextApiResponse } from 'next'
 import auth0 from '../../lib/auth0/auth0'
 import { createFaunaAdminAPI } from '../../lib/api/admin-api'
 import { User, UserProfile } from '../../lib/types/domain-types'
@@ -6,7 +7,10 @@ import { User, UserProfile } from '../../lib/types/domain-types'
 // application. This is why the callback route (/pages/api/callback.js) needs to
 // be created which will create a session cookie:
 
-export default async function callback(req, res) {
+export default async function callback(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     await auth0.handleCallback(req, res, {
       redirectTo: '/',

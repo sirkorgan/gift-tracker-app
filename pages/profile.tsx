@@ -4,6 +4,9 @@ import withAuth from '../components/with-auth'
 import Layout from '../components/layout'
 import { createFaunaUserAPI } from '../lib/api/user-api'
 
+// View own profile
+// Edit own profile
+
 const Profile = (props) => {
   const [error, setError] = React.useState(null)
   const [appUser, setAppUser] = React.useState(null as any)
