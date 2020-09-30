@@ -70,6 +70,7 @@ const indexes = [
       source: 'users',
       unique: true,
       terms: [{ field: ['data', 'email'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -101,6 +102,7 @@ const indexes = [
       source: 'profiles',
       unique: true,
       terms: [{ field: ['data', 'userName'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -113,6 +115,7 @@ const indexes = [
       source: 'occasions',
       unique: true,
       terms: [{ field: ['data', 'organizer'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -126,6 +129,15 @@ const indexes = [
   {
     name: 'all_participants',
     params: { source: 'participants' },
+  },
+  {
+    name: 'participants_by_occasionId',
+    params: {
+      source: 'participants',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
+    },
   },
   {
     name: 'participants_occasionId_by_profileId',
@@ -146,6 +158,7 @@ const indexes = [
       source: 'invitations',
       unique: true,
       terms: [{ field: ['data', 'sender'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -154,6 +167,16 @@ const indexes = [
       source: 'invitations',
       unique: true,
       terms: [{ field: ['data', 'recipient'] }],
+      values: [{ field: ['ref'] }],
+    },
+  },
+  {
+    name: 'invitations_by_occasionId',
+    params: {
+      source: 'invitations',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -162,6 +185,7 @@ const indexes = [
       source: 'signuprequests',
       unique: true,
       terms: [{ field: ['data', 'profileId'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -170,6 +194,7 @@ const indexes = [
       source: 'signuprequests',
       unique: true,
       terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
     },
   },
   {
@@ -177,8 +202,43 @@ const indexes = [
     params: { source: 'gifts' },
   },
   {
+    name: 'gifts_by_occasionId',
+    params: {
+      source: 'gifts',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
+    },
+  },
+  {
+    name: 'gift_suggestedFor',
+    params: {
+      source: 'gifts',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'suggestedFor'] }],
+    },
+  },
+  {
     name: 'all_claims',
     params: { source: 'claims' },
+  },
+  {
+    name: 'claims_by_occasionId',
+    params: {
+      source: 'claims',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
+    },
+  },
+  {
+    name: 'claims_by_giftId',
+    params: {
+      source: 'claims',
+      unique: true,
+      terms: [{ field: ['data', 'giftId'] }],
+      values: [{ field: ['ref'] }],
+    },
   },
 ]
 
@@ -237,7 +297,6 @@ const roles = {
             // TODO: allowed if only changing nickname
             write: false,
             // allowed if user is the participant or organizer
-            // TODO: test me
             delete: Query(
               Lambda(
                 'ref',
@@ -246,7 +305,12 @@ const roles = {
                     Select(['data', 'profileId'], Get(Var('ref'))),
                     getIdentityProfileId()
                   ),
-                  userIsOrganizer(Var('ref'))
+                  userIsOrganizer(
+                    Ref(
+                      Collection('occasions'),
+                      Select(['data', 'occasionId'], Get(Var('ref')))
+                    )
+                  )
                 )
               )
             ),
@@ -329,6 +393,38 @@ const roles = {
         },
         {
           resource: { type: 'index', name: 'invitations_by_recipient' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'invitations_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'participants_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: {
+            type: 'index',
+            name: 'participants_occasionId_by_profileId',
+          },
+          // TODO: allow read only if profileId is for current user
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'gifts_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'gift_suggestedFor' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'claims_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'claims_by_giftId' },
           actions: { read: true },
         },
       ],

@@ -107,10 +107,11 @@ export interface Occasion {
    */
   title: string
   description: string
+  // TODO: add date
   /**
-   * If true, generate a signup link for the occasion and allow users who have
-   * the link to request to participate in the event. Organizers may approve or
-   * reject the signup requests.
+   * If true, make available a signup link for the occasion and allow users who
+   * have the link to request to participate in the event. Organizers may
+   * approve or reject the signup requests.
    */
   allowSignups: boolean
 }
@@ -224,7 +225,7 @@ export interface Gift {
   id?: string
   occasionId: string
   name: string
-  description: string
+  description?: string
   /**
    * Link to an image representing the the gift (ex. imgur).
    */

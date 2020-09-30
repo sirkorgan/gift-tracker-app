@@ -5,6 +5,7 @@ import {
   SignupRequest,
   Invitation,
   Participant,
+  Gift,
 } from './domain-types'
 
 export interface FaunaRef {
@@ -41,4 +42,9 @@ export interface FaunaInvitation {
 export interface FaunaParticipant {
   ref?: FaunaRef
   data: Participant
+}
+
+export interface FaunaGift {
+  ref?: FaunaRef
+  data: Gift
 }
