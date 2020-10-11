@@ -219,8 +219,32 @@ const indexes = [
     },
   },
   {
+    name: 'gift_suggestedBy',
+    params: {
+      source: 'gifts',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'suggestedBy'] }],
+    },
+  },
+  {
+    name: 'gift_occasionId',
+    params: {
+      source: 'gifts',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'occasionId'] }],
+    },
+  },
+  {
     name: 'all_claims',
     params: { source: 'claims' },
+  },
+  {
+    name: 'unique_claim_giftId',
+    params: {
+      source: 'claims',
+      unique: true,
+      terms: [{ field: ['data', 'giftId'] }],
+    },
   },
   {
     name: 'claims_by_occasionId',
@@ -238,6 +262,14 @@ const indexes = [
       unique: true,
       terms: [{ field: ['data', 'giftId'] }],
       values: [{ field: ['ref'] }],
+    },
+  },
+  {
+    name: 'claim_giftId',
+    params: {
+      source: 'claims',
+      terms: [{ field: ['ref'] }],
+      values: [{ field: ['data', 'giftId'] }],
     },
   },
 ]
@@ -420,11 +452,23 @@ const roles = {
           actions: { read: true },
         },
         {
+          resource: { type: 'index', name: 'gift_suggestedBy' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'gift_occasionId' },
+          actions: { read: true },
+        },
+        {
           resource: { type: 'index', name: 'claims_by_occasionId' },
           actions: { read: true },
         },
         {
           resource: { type: 'index', name: 'claims_by_giftId' },
+          actions: { read: true },
+        },
+        {
+          resource: { type: 'index', name: 'claim_giftId' },
           actions: { read: true },
         },
       ],

@@ -6,6 +6,7 @@ import {
   SignupRequest,
   Invitation,
   Gift,
+  Claim,
 } from '../types/domain-types'
 import { IUserAPI } from '../types/api-types'
 import {
@@ -16,6 +17,7 @@ import {
   FaunaSignupRequest,
   FaunaInvitation,
   FaunaGift,
+  FaunaClaim,
 } from '../types/fauna-types'
 import { getIdentityProfileId } from './util'
 
@@ -262,15 +264,26 @@ export class FaunaUserAPI implements IUserAPI {
   async getGiftsForOccasion(occasionId: string): Promise<Gift[]> {
     const pageHelper = this.client
       .paginate(q.Match(q.Index('gifts_by_occasionId'), occasionId))
-      // exlude gifts for which current user is the recipient
+      // exlude gifts for which current user is the recipient and not the suggester
       .filter((ref) =>
         q.Not(
-          q.Equals(
-            q.Select(
-              ['data', 0],
-              q.Paginate(q.Match(q.Index('gift_suggestedFor'), ref))
+          q.And(
+            q.Equals(
+              q.Select(
+                ['data', 0],
+                q.Paginate(q.Match(q.Index('gift_suggestedFor'), ref))
+              ),
+              getIdentityProfileId()
             ),
-            getIdentityProfileId()
+            q.Not(
+              q.Equals(
+                q.Select(
+                  ['data', 0],
+                  q.Paginate(q.Match(q.Index('gift_suggestedBy'), ref))
+                ),
+                getIdentityProfileId()
+              )
+            )
           )
         )
       )
@@ -288,6 +301,82 @@ export class FaunaUserAPI implements IUserAPI {
         q.Delete(q.Ref(q.Collection('gifts'), giftId))
       )
     )
+  }
+
+  // CLAIMS
+  async claimGift(params: {
+    giftId: string
+    anonymous?: boolean
+  }): Promise<Claim> {
+    const getGiftOccasionId = (giftId) =>
+      q.Select(
+        ['data', 0],
+        q.Paginate(
+          q.Match(
+            q.Index('gift_occasionId'),
+            q.Ref(q.Collection('gifts'), giftId)
+          )
+        )
+      )
+    const { giftId, anonymous } = params
+    // const claimedBy: string = await this.client.query(getIdentityProfileId())
+    const doc = await this.client.query<FaunaClaim>(
+      q.Let(
+        {
+          params: {
+            data: {
+              giftId,
+              anonymous,
+              claimedBy: getIdentityProfileId(),
+              occasionId: getGiftOccasionId(giftId),
+            },
+          },
+        },
+        q.Create(q.Collection('claims'), q.Var('params'))
+      )
+    )
+    return unwrapWithId(doc)
+  }
+  async getClaimsForOccasion(occasionId: string): Promise<Claim[]> {
+    const getClaimGiftRef = (claimRef) =>
+      q.Ref(
+        q.Collection('gifts'),
+        q.Select(
+          ['data', 0],
+          q.Paginate(q.Match(q.Index('claim_giftId'), claimRef))
+        )
+      )
+    const pageHelper = this.client
+      .paginate(q.Match(q.Index('claims_by_occasionId'), occasionId))
+      // take only claims for which current user is not the gift recipient
+      .filter((ref) =>
+        q.Not(
+          q.Equals(
+            q.Select(
+              ['data', 0],
+              q.Paginate(
+                q.Match(q.Index('gift_suggestedFor'), getClaimGiftRef(ref))
+              )
+            ),
+            getIdentityProfileId()
+          )
+        )
+      )
+      .map((ref) => q.Get(ref))
+    const claims: Claim[] = await unwrapPages(pageHelper)
+    // unset the claimedBy fields of anonymous claims. TODO: make this happen at
+    // the database level - we've already transmitted the data we are trying to
+    // hide, so users can still get the claimedBy values from the network
+    // request if they are interested.
+    for (const claim of claims) {
+      if (claim.anonymous) {
+        delete claim.claimedBy
+      }
+    }
+    return claims
+  }
+  async deleteClaim(claimId: string): Promise<void> {
+    await this.client.query(q.Delete(q.Ref(q.Collection('claims'), claimId)))
   }
 }
 

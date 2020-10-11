@@ -274,8 +274,8 @@ export interface Claim {
    */
   anonymous: boolean
   /**
-   * If anonymous is true, the claimedBy field should not be shown to other
-   * Participants.
+   * This field should always be populated in the database, however if anonymous
+   * is true, the claimedBy field should not be shown to other Participants.
    */
   claimedBy?: string
 }

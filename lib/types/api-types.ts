@@ -6,6 +6,7 @@ import {
   SignupRequest,
   Invitation,
   Gift,
+  Claim,
 } from './domain-types'
 
 export interface IUserAPI {
@@ -73,14 +74,18 @@ export interface IUserAPI {
     suggestedFor: string
   }): Promise<Gift>
   /**
-   * Returns all gifts which have been suggested for the occasion.
-   * Will not return gifts for which the current user is the recipient.
+   * Returns all gifts which have been suggested for the occasion. Will not
+   * return gifts for which the current user is the recipient and not the
+   * suggester.
    * @param occasionId
    */
   getGiftsForOccasion(occasionId: string): Promise<Gift[]>
   deleteGift(giftId: string): Promise<void>
 
-  // CLAIM
+  // CLAIMS
+  claimGift(params: { giftId: string; anonymous?: boolean }): Promise<Claim>
+  getClaimsForOccasion(occasionId: string): Promise<Claim[]>
+  deleteClaim(claimId: string): Promise<void>
 }
 
 export interface IAdminAPI {
