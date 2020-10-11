@@ -256,9 +256,4 @@ describe('user tests', () => {
       expect(users.alice.api.deleteOccasion(occasionId)).resolves.not.toThrow()
     })
   })
-
-  // TODO: needs manual testing as api route:
-  //  - user request to change name
-  //  - user interact with invitation
-  //  - organizer accept signup request
 })

@@ -135,3 +135,23 @@ export interface IAdminAPI {
     occasionId: string
   ): Promise<Participant>
 }
+
+export type ChangeNameRequestBody = {
+  email: string
+  secret: string
+  name: string
+}
+
+export type InvitationRequestBody = {
+  email: string
+  secret: string
+  invitationId: string
+  action: 'accept'
+}
+
+export type SignupRequestBody = {
+  email: string
+  secret: string
+  signupRequestId: string
+  action: 'accept' | 'reject'
+}

@@ -94,16 +94,16 @@ class AdminAPI implements IAdminAPI {
 
   async verifySecret(email: string, secret: string): Promise<boolean> {
     // verify that the given secret is valid for the account with the given email
-    const api = createFaunaAdminAPI(secret)
+    const api = createFaunaUserAPI(secret)
     try {
       api.getUserByEmail(email)
+      return true
     } catch (err) {
       // this will throw if:
       //  - there is no user
       //  - the secret is not for the given user
       return false
     }
-    return true
   }
 
   async loginUser(email: string): Promise<{ ref: FaunaRef; secret: string }> {
