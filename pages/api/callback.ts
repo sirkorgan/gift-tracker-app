@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import auth0 from '../../lib/auth0/auth0'
+import getAuth0 from '../../lib/auth0/auth0'
 import { createFaunaAdminAPI } from '../../lib/api/admin-api'
 import { User, UserProfile } from '../../lib/types/domain-types'
 
@@ -12,6 +12,7 @@ export default async function callback(
   res: NextApiResponse
 ) {
   try {
+    const auth0 = getAuth0()
     await auth0.handleCallback(req, res, {
       redirectTo: '/',
       onUserLoaded: async (req, res, session, state) => {
