@@ -15,7 +15,7 @@ export default function withAuth(InnerComponent) {
         }
       }
 
-      const auth0 = getAuth0()
+      const auth0 = getAuth0(ctx.req)
       const session = await auth0.getSession(ctx.req)
       if (!session || !session.user) {
         ctx.res.writeHead(302, {

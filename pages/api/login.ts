@@ -8,7 +8,7 @@ import getAuth0 from '../../lib/auth0/auth0'
 
 export default async function login(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const auth0 = getAuth0()
+    const auth0 = getAuth0(req)
     await auth0.handleLogin(req, res)
   } catch (error) {
     console.error(error)

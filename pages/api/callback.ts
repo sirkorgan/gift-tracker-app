@@ -12,7 +12,7 @@ export default async function callback(
   res: NextApiResponse
 ) {
   try {
-    const auth0 = getAuth0()
+    const auth0 = getAuth0(req)
     await auth0.handleCallback(req, res, {
       redirectTo: '/',
       onUserLoaded: async (req, res, session, state) => {

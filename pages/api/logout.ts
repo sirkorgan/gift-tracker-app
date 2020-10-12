@@ -7,7 +7,7 @@ export default async function logout(
 ) {
   try {
     // TODO: delete fauna user keys
-    const auth0 = getAuth0()
+    const auth0 = getAuth0(req)
     await auth0.handleLogout(req, res)
   } catch (error) {
     console.error(error)
