@@ -781,14 +781,50 @@ async function cleanDb(secret) {
   }
 }
 
+async function confirmProductionChange() {
+  return new Promise((resolve, reject) => {
+    console.log(
+      `\n**********\nWARNING: YOU ARE NOW OPERATING ON THE PRODUCTION DATABASE\n**********`
+    )
+    const readline = require('readline')
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    })
+
+    const verificationNumber = String(Math.floor(1000 + Math.random() * 9000))
+    rl.question(
+      `If you really mean to continue with the production database, input this number to confirm (${verificationNumber}): `,
+      function (userInput) {
+        if (userInput === verificationNumber) {
+          resolve(true)
+        } else {
+          resolve(false)
+        }
+      }
+    )
+    rl.on('close', function () {
+      resolve(false)
+    })
+  })
+}
+
 async function work() {
   try {
     const getTarget = (arg) => {
       switch (arg) {
-        case 'prod':
+        case 'local':
           return process.env.FAUNA_ADMIN_KEY
         case 'test':
           return process.env.TESTDB_SECRET
+        case 'prod': {
+          const prodConfig = require('path').resolve(
+            __dirname,
+            '../.env.production.local'
+          )
+          require('dotenv').config({ path: prodConfig })
+          return process.env.PRODUCTION_ADMIN_KEY
+        }
         default:
           console.error('Unknown DB target: ' + arg)
           return undefined
@@ -807,8 +843,15 @@ async function work() {
 
     const target = getTarget(targetArg)
     if (!target) {
-      console.log(`Must provide target as argument: "prod" or "test"`)
+      console.log(`Must provide target as argument: "local" or "test"`)
     } else {
+      if (target === 'prod') {
+        if (false === (await confirmProductionChange())) {
+          console.log('Aborted production change. Nothing has been modified.')
+          process.exit(0)
+        }
+      }
+
       if (shouldClean) {
         await cleanDb(target)
         console.log('Waiting 1 minute for names to be released.')

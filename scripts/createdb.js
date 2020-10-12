@@ -11,7 +11,7 @@ const isCLI = () => {
 
 const q = faunadb.query
 
-export async function createTestDb(ADMIN_KEY) {
+async function createTestDb(ADMIN_KEY) {
   try {
     const client = new faunadb.Client({ secret: ADMIN_KEY })
     // create db

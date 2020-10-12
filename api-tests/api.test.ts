@@ -6,10 +6,12 @@ import { TestDatabase, TestUser, TestUsers } from '../lib/types/api-test-types'
 import { createFaunaAdminAPI } from '../lib/api/admin-api'
 import { createFaunaUserAPI } from '../lib/api/user-api'
 import { Occasion } from '../lib/types/domain-types'
+import util from 'util'
 
 import fs from 'fs'
 
 const stream = fs.createWriteStream('log.txt', { flags: 'a' })
+stream.write('\n')
 function log(msg) {
   stream.write(new Date().toISOString() + ': ' + msg + '\n')
 }
@@ -20,6 +22,9 @@ const testDb: TestDatabase = {
   name: process.env.TESTDB_NAME,
   secret: process.env.TESTDB_SECRET,
 }
+
+log('Test database parameters: ' + util.inspect(testDb))
+
 const admin: IAdminAPI = createFaunaAdminAPI(testDb.secret)
 
 async function loadUser(email: string): Promise<TestUser> {

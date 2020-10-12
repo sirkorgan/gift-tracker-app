@@ -2,6 +2,8 @@ import { IAdminAPI } from '../lib/types/api-types'
 import { TestUser } from '../lib/types/api-test-types'
 import { createFaunaAdminAPI } from '../lib/api/admin-api'
 import { createFaunaUserAPI } from '../lib/api/user-api'
+import dotenv from 'dotenv'
+import path from 'path'
 
 async function createTestUsers(target): Promise<void> {
   try {
@@ -38,5 +40,9 @@ async function createTestUsers(target): Promise<void> {
   }
 }
 
-jest.setTimeout(10000)
-createTestUsers(process.env.TESTDB_SECRET)
+module.exports = async function () {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') })
+  console.log('\nPerforming global test setup...')
+  await createTestUsers(process.env.TESTDB_SECRET)
+  console.log('Setup complete.')
+}

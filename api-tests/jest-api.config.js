@@ -6,7 +6,8 @@ module.exports = {
     '^.+\\.(ts|tsx)$': 'babel-jest',
   },
   setupFiles: ['dotenv/config'],
-  setupFilesAfterEnv: ['./jest-api.setup.ts'],
+  setupFilesAfterEnv: ['./jest-api.setup.js'],
+  globalSetup: './jest-api.globalsetup.ts',
 }
 
 /*
