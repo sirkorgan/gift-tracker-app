@@ -1483,11 +1483,6 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@k-foss/ts-esnode@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@k-foss/ts-esnode/-/ts-esnode-1.7.0.tgz#6da0c562c197c38874a95b752bda38946479972f"
-  integrity sha512-tvWO9qaVKfGgoFt34gZuiLMbIap1bzM4I+sVre9BRJNKrIGHiRsRiXBSO1OR8DyprazDobzuBt5jm3ggV6LD1g==
-
 "@next/react-dev-overlay@9.5.3":
   version "9.5.3"
   resolved "https://registry.yarnpkg.com/@next/react-dev-overlay/-/react-dev-overlay-9.5.3.tgz#3275301f08045ecc709e3273031973a1f5e81427"

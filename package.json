@@ -6,14 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "createdb": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/createdb.ts",
-    "updatedb": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/updatedb.ts",
-    "test-fauna-client": "node -r dotenv/config --loader @k-foss/ts-esnode --experimental-specifier-resolution=node ./scripts/test-fauna-api.ts",
+    "createdb": "node -r dotenv/config ./scripts/createdb.js",
+    "updatedb": "node -r dotenv/config ./scripts/updatedb.js",
     "test:api": "npx jest --config api-tests/jest-api.config.js --runInBand"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^0.16.0",
-    "@k-foss/ts-esnode": "^1.7.0",
     "babel-eslint": "^10.0.0",
     "chalk": "^4.1.0",
     "cuid": "^2.1.8",

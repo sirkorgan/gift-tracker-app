@@ -1,18 +1,12 @@
-import faunadb from 'faunadb'
-
-import { IAdminAPI } from '../lib/types/api-types'
-import { TestUser } from '../lib/types/api-test-types'
-import { createFaunaAdminAPI } from '../lib/api/admin-api'
-import { createFaunaUserAPI } from '../lib/api/user-api'
-import { getIdentityProfileId } from '../lib/api/util'
+const faunadb = require('faunadb')
 
 /** True if we are running as a script rather than a module */
 const isCLI = () => {
-  return process.argv.length > 1 && import.meta.url.includes(process.argv[1])
+  // return process.argv.length > 1 && import.meta.url.includes(process.argv[1])
+  return require.main === module
 }
 
-const delay = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms))
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const q = faunadb.query
 
@@ -47,7 +41,13 @@ const {
   CreateRole,
 } = faunadb.query
 
-const collections: any = [
+const getIdentityProfileId = () =>
+  q.Select(
+    ['data', 0],
+    q.Paginate(q.Match(q.Index('user_profileId'), q.Identity()))
+  )
+
+const collections = [
   { name: 'users' },
   { name: 'tokens_issued' },
   { name: 'profiles' },
@@ -480,7 +480,7 @@ const roles = {
 // Based on https://github.com/RWizard/faunadb-transform
 // Absorbed into local codebase for typescript support with ts-esnode
 
-async function doCollections(collections = [], client: faunadb.Client) {
+async function doCollections(collections = [], client) {
   // prepare promises
   const promises = collections
     .map((collection) => {
@@ -492,7 +492,7 @@ async function doCollections(collections = [], client: faunadb.Client) {
     .map((collection) => async () => {
       const name = collection.params.name
       try {
-        await client.query<any>(
+        await client.query(
           Map(
             [collection],
             Lambda(
@@ -543,7 +543,7 @@ async function doCollections(collections = [], client: faunadb.Client) {
   console.log('Collections - done')
 }
 
-async function doIndexes(indexes = [], client: faunadb.Client) {
+async function doIndexes(indexes = [], client) {
   const promises = indexes
     .map((index) => {
       // generate params object if it wasn't given
@@ -554,7 +554,7 @@ async function doIndexes(indexes = [], client: faunadb.Client) {
     .map((index) => async () => {
       const name = index.params.name
       try {
-        await client.query<any>(
+        await client.query(
           Map(
             [index],
             Lambda(
@@ -655,7 +655,7 @@ async function doIndexes(indexes = [], client: faunadb.Client) {
   console.log('Indexes - done')
 }
 
-export async function doRoles(roles = {}, client: faunadb.Client) {
+async function doRoles(roles = {}, client) {
   let rolesArray = Object.keys(roles).map((userColl) => {
     roles[userColl].name = roles[userColl].name || userColl
     roles[userColl].params = roles[userColl].params || {}
@@ -677,6 +677,9 @@ export async function doRoles(roles = {}, client: faunadb.Client) {
             case 'function':
               priv.resource = Ref(Ref('functions'), priv.resource.name)
               break
+            default:
+              console.error('Unknown resource type: ' + priv.resource.type)
+              process.exit(1)
           }
         }
       })
@@ -741,42 +744,7 @@ export async function doRoles(roles = {}, client: faunadb.Client) {
     .catch((err) => console.log('Promises all Roles error :', err))
 }
 
-export async function createTestUsers(target): Promise<void> {
-  try {
-    const createTestUser = async (
-      adminApi: IAdminAPI,
-      name: string
-    ): Promise<void> => {
-      const email = `${name}@fakemail.com`
-      if (await adminApi.userExists(email)) {
-        console.log(`User ${name} already exists`)
-        return
-      }
-      const userData = await adminApi.createUserAndProfile(email)
-      const userToken = await adminApi.loginUser(email)
-      const api = createFaunaUserAPI(userToken.secret)
-      const testUser: TestUser = {
-        user: userData.user,
-        profile: userData.profile,
-        api,
-      }
-      console.log(
-        `Created user ${testUser.user.email} - ${testUser.profile.userName}`
-      )
-    }
-
-    const adminApi = createFaunaAdminAPI(target)
-    const users = ['alice', 'bob', 'carol']
-    for (const name of users) {
-      await createTestUser(adminApi, name)
-    }
-  } catch (err) {
-    console.error(`Failed to create testusers:`, err)
-    process.exit(1)
-  }
-}
-
-export async function updateDb(secret) {
+async function updateDb(secret) {
   const client = new faunadb.Client({ secret })
   const json = {
     collections,
@@ -792,7 +760,7 @@ export async function updateDb(secret) {
  * Deletes the contents of a database.
  * @param secret
  */
-export async function cleanDb(secret) {
+async function cleanDb(secret) {
   try {
     console.log('Cleaning database...')
     const client = new faunadb.Client({ secret })
@@ -847,7 +815,6 @@ async function work() {
         await delay(60 * 1000)
       }
       await updateDb(target)
-      if (targetArg === 'test') await createTestUsers(target)
     }
   } catch (err) {
     console.error(err)
@@ -855,4 +822,9 @@ async function work() {
 }
 if (isCLI()) {
   work()
+}
+
+// used by createdb script
+module.exports = {
+  updateDb,
 }
