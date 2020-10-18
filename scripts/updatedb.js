@@ -845,7 +845,7 @@ async function work() {
     if (!target) {
       console.log(`Must provide target as argument: "local" or "test"`)
     } else {
-      if (target === 'prod') {
+      if (targetArg === 'prod') {
         if (false === (await confirmProductionChange())) {
           console.log('Aborted production change. Nothing has been modified.')
           process.exit(0)
