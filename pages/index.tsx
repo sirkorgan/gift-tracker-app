@@ -1,27 +1,27 @@
 import React from 'react'
-import Layout from '../components/layout'
-import { useFetchUser } from '../lib/auth0/user'
+import Layout from '../components/Layout'
+import Home from '../features/Home/Home'
+import { useSession } from '../lib/user'
 
 // Public landing page with login/signup links.
 // All other routes require the user to be logged in.
 // When the user logsin, they should redirected to the /occasions route.
 
-const Index = (props) => {
-  const { user, loading } = useFetchUser()
+const Page = (props) => {
+  const { userSession } = useSession()
 
+  // TODO: rethink where user is fetched. Try to fetch user only once per session!
   return (
-    <Layout user={user} loading={loading}>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <h1 className="text-5xl font-bold text-purple-500">Hello world!</h1>
-        <div>Sign up or log in</div>
-      </div>
+    <Layout>
+      {!userSession && (
+        <div className="flex flex-col">
+          <p className="font-bold text-lg">Welcome to Gift Tracker!</p>
+          <p>Please login or sign up to continue.</p>
+        </div>
+      )}
+      {userSession && <Home />}
     </Layout>
   )
 }
 
-export default Index
+export default Page
