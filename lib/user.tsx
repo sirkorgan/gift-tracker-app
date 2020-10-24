@@ -37,14 +37,15 @@ type UserSession = {
   fauna_token: string
 }
 
-type UserContextData = {
+type UserContextContent = {
   userSession: UserSession
   userApi: IUserAPI
   userAccount: User
   userProfile: UserProfile
+  refetch: Function
 }
 
-const UserContext = React.createContext<UserContextData>(undefined)
+const UserContext = React.createContext<UserContextContent>(undefined)
 
 // this will only ever be called from the client
 export const fetchSession = async (): Promise<UserSession> => {
@@ -61,8 +62,12 @@ async function fetchUserProfile(key, profileId) {
   return getApi().getUserProfileById(profileId)
 }
 
-export const useSessionQuery = (initialUser) =>
-  useQuery(QUERY_KEY_SESSION, fetchSession, { initialData: initialUser })
+export const useSessionQuery = (initialUser = undefined) =>
+  useQuery(
+    QUERY_KEY_SESSION,
+    fetchSession,
+    initialUser ? { initialData: initialUser } : undefined
+  )
 
 export function useUserQuery(email) {
   return useQuery([QUERY_KEY_USER, email], fetchUser, {
@@ -88,14 +93,21 @@ export const UserSessionProvider = ({ initialUser, children }) => {
   const appUserQuery = useUserQuery(userSession?.email)
   const appProfileQuery = useProfileQuery(appUserQuery.data?.profileId)
 
+  const refetch = React.useCallback(() => {
+    userSessionQuery.refetch()
+    appUserQuery.refetch()
+    appProfileQuery.refetch()
+  }, [appProfileQuery, appUserQuery, userSessionQuery])
+
   const contextValue = React.useMemo(() => {
     return {
       userSession: userSession,
       userApi: initApi(userSession?.fauna_token),
       userAccount: appUserQuery.data,
       userProfile: appProfileQuery.data,
+      refetch,
     }
-  }, [appProfileQuery.data, appUserQuery.data, userSession])
+  }, [appProfileQuery.data, appUserQuery.data, refetch, userSession])
 
   return (
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>

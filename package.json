@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^0.16.0",
+    "axios": "^0.21.0",
     "babel-eslint": "^10.0.0",
     "chalk": "^4.1.0",
     "classnames": "^2.2.6",
@@ -32,7 +33,7 @@
     "react-dom": "16.13.1",
     "react-query": "^2.23.1",
     "react-query-devtools": "^1.1.17",
-    "tailwindcss": "^1.8.10",
+    "tailwindcss": "^1.9.4",
     "ts-node": "^8.10.2",
     "unique-names-generator": "^4.2.0"
   },

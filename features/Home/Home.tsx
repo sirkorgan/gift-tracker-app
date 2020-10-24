@@ -1,5 +1,6 @@
 import React from 'react'
 import Button from '../../components/Button'
+import Heading from '../../components/Heading'
 import { useOccasionsByOrganizerQuery } from '../../lib/hooks'
 import { useSession } from '../../lib/user'
 
@@ -11,7 +12,7 @@ export default function Home(props) {
   return (
     <div>
       <section className="flex flex-col space-y-1">
-        <h2 className="font-bold text-lg">Your Occasions</h2>
+        <Heading>Your Occasions</Heading>
         <Button
           onClick={async () => {
             try {
@@ -54,7 +55,6 @@ export default function Home(props) {
               console.error(err)
             }
           }}
-          // TODO: figure out why this doesn't work
           disabled={!(occasionsQuery.data?.length > 0)}
         >
           Delete Occasion

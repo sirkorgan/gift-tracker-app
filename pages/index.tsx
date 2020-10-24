@@ -3,14 +3,9 @@ import Layout from '../components/Layout'
 import Home from '../features/Home/Home'
 import { useSession } from '../lib/user'
 
-// Public landing page with login/signup links.
-// All other routes require the user to be logged in.
-// When the user logsin, they should redirected to the /occasions route.
-
 const Page = (props) => {
   const { userSession } = useSession()
 
-  // TODO: rethink where user is fetched. Try to fetch user only once per session!
   return (
     <Layout>
       {!userSession && (

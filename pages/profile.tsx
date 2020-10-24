@@ -1,14 +1,13 @@
 import React from 'react'
-import withAuth from '../components/withAuth'
 import Layout from '../components/Layout'
 import Profile from '../features/Profile/Profile'
 
 const Page = (props) => {
   return (
-    <Layout>
+    <Layout requireAuth>
       <Profile />
     </Layout>
   )
 }
 
-export default withAuth(Page)
+export default Page
