@@ -7,6 +7,7 @@ import {
   Invitation,
   Gift,
   Claim,
+  Participant,
 } from '../types/domain-types'
 import { IUserAPI } from '../types/api-types'
 import {
@@ -122,9 +123,7 @@ export class FaunaUserAPI implements IUserAPI {
 
   async getOccasionById(id: string): Promise<Occasion> {
     const doc = await this.client.query<FaunaOccasion>(
-      q.Get(
-        q.Match(q.Index('all_occasions'), q.Ref(q.Collection('occasions'), id))
-      )
+      q.Get(q.Ref(q.Collection('occasions'), id))
     )
     return unwrapWithId(doc)
   }
@@ -133,6 +132,15 @@ export class FaunaUserAPI implements IUserAPI {
     const pageHelper = this.client
       .paginate(q.Match(q.Index('occasions_by_organizer'), profileId))
       .map((ref) => q.Get(ref))
+    return unwrapPages(pageHelper)
+  }
+
+  async getOccasionsByParticipant(profileId: string): Promise<Occasion[]> {
+    const pageHelper = this.client
+      .paginate(
+        q.Match(q.Index('participants_occasionId_by_profileId'), profileId)
+      )
+      .map((id) => q.Get(q.Ref(q.Collection('occasions'), id)))
     return unwrapPages(pageHelper)
   }
 
@@ -202,6 +210,7 @@ export class FaunaUserAPI implements IUserAPI {
           occasionId,
           sender,
           recipient,
+          status: 'pending',
         },
       })
     )
@@ -227,6 +236,13 @@ export class FaunaUserAPI implements IUserAPI {
     await this.client.query(
       q.Delete(q.Ref(q.Collection('invitations'), invitationId))
     )
+  }
+
+  async getParticipantsForOccasion(occasionId: string): Promise<Participant[]> {
+    const pageHelper = this.client
+      .paginate(q.Match(q.Index('participants_by_occasionId'), occasionId))
+      .map((ref) => q.Get(ref))
+    return unwrapPages(pageHelper)
   }
 
   async createGift(params: {

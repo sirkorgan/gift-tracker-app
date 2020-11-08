@@ -1,10 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 
-import { useSession } from '../lib/user'
+import { useUserSessionContext } from '../lib/user'
 
 const Header = () => {
-  const { userSession, userProfile } = useSession()
+  const { userSession, userProfile } = useUserSessionContext()
 
   return (
     <header className="">

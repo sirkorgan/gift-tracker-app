@@ -2,11 +2,11 @@ import React from 'react'
 import Head from 'next/head'
 
 import Header from './Header'
-import { useSession } from '../lib/user'
+import { useUserSessionContext } from '../lib/user'
 import RedirectToLogin from './RedirectToLogin'
 
 const Layout = ({ requireAuth = false, children }) => {
-  const session = useSession()
+  const session = useUserSessionContext()
 
   if (requireAuth && !session.userProfile) {
     return <RedirectToLogin />

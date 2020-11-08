@@ -1,25 +1,16 @@
 import React from 'react'
+import { useRouter } from 'next/router'
 
-// Occasion not found (if no occasion with that id)
+import Layout from '../../components/Layout'
+import ViewOccasion from '../../features/Occasion/ViewOccasion'
 
-// as organizer:
-// View occasion
-// Edit occasion
-// View signup requests
-// Accept signup request
-// View particpants
-// Send invitation
-// View invitations
-// Cancel invitation
+export default function Page(props) {
+  const router = useRouter()
+  const { id } = router.query
 
-// as particpant:
-// View occasion
-
-// as non-particpant:
-// Accept invitation (if user has been invited)
-// Signup (if occasion is open to signups)
-// Occasion not found (if occasion is not open to signups)
-
-export default function () {
-  return <div>View occasion</div>
+  return (
+    <Layout requireAuth>
+      <ViewOccasion id={id as string} />
+    </Layout>
+  )
 }

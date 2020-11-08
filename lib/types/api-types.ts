@@ -34,10 +34,8 @@ export interface IUserAPI {
    * Only return occasion if the current user is orgnaizing or particpating.
    */
   getOccasionById(id: string): Promise<Occasion>
-  /**
-   *  Only return occasions if the organizer is the current user.
-   */
   getOccasionsByOrganizer(profileId: string): Promise<Occasion[]>
+  getOccasionsByParticipant(profileId: string): Promise<Occasion[]>
   updateOccasion(occasion: Occasion): Promise<Occasion>
 
   // SIGNUP
@@ -62,7 +60,7 @@ export interface IUserAPI {
   deleteInvitation(invitationId: string): Promise<void>
 
   // PARTICIPANTS
-  // getParticipantsByOccasion
+  getParticipantsForOccasion(occasionId: string): Promise<Participant[]>
 
   // GIFTS
   createGift(params: {
@@ -125,6 +123,7 @@ export interface IAdminAPI {
   updateUserProfileName(profileId: string, name: string): Promise<UserProfile>
 
   // PARTICIPANTS
+  getInvitation(invitationId: string): Promise<Invitation>
 
   /**
    * After adding the particpant, any related SignupRequest or Invitation should

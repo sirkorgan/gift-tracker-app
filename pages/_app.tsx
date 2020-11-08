@@ -40,10 +40,14 @@ GiftTrackerApp.getInitialProps = async (appContext: AppContext) => {
     const session = await auth0.getSession(ctx.req)
     // if the user exists in the session, include it in the app props so that the
     // client doesn't need to check it
-    if (session?.user) {
-      const prefetchCache = await getPrefetchCache(ctx)
-      appProps.pageProps.user = session.user
-      appProps.pageProps.dehydratedState = dehydrate(prefetchCache)
+    try {
+      if (session?.user) {
+        const prefetchCache = await getPrefetchCache(ctx)
+        appProps.pageProps.user = session.user
+        appProps.pageProps.dehydratedState = dehydrate(prefetchCache)
+      }
+    } catch {
+      // DB was cleaned or user data is otherwise not there
     }
   }
 

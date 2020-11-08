@@ -37,7 +37,7 @@ type UserSession = {
   fauna_token: string
 }
 
-type UserContextContent = {
+interface IUserSessionContext {
   userSession: UserSession
   userApi: IUserAPI
   userAccount: User
@@ -45,7 +45,7 @@ type UserContextContent = {
   refetch: Function
 }
 
-const UserContext = React.createContext<UserContextContent>(undefined)
+const UserSessionContext = React.createContext<IUserSessionContext>(undefined)
 
 // this will only ever be called from the client
 export const fetchSession = async (): Promise<UserSession> => {
@@ -62,12 +62,13 @@ async function fetchUserProfile(key, profileId) {
   return getApi().getUserProfileById(profileId)
 }
 
-export const useSessionQuery = (initialUser = undefined) =>
-  useQuery(
+export const useSession = (initialUser: UserSession = undefined) => {
+  return useQuery(
     QUERY_KEY_SESSION,
     fetchSession,
     initialUser ? { initialData: initialUser } : undefined
   )
+}
 
 export function useUserQuery(email) {
   return useQuery([QUERY_KEY_USER, email], fetchUser, {
@@ -88,7 +89,7 @@ export function useProfileQuery(profileId) {
 }
 
 export const UserSessionProvider = ({ initialUser, children }) => {
-  const userSessionQuery = useSessionQuery(initialUser)
+  const userSessionQuery = useSession(initialUser)
   const userSession = userSessionQuery.data
   const appUserQuery = useUserQuery(userSession?.email)
   const appProfileQuery = useProfileQuery(appUserQuery.data?.profileId)
@@ -110,11 +111,13 @@ export const UserSessionProvider = ({ initialUser, children }) => {
   }, [appProfileQuery.data, appUserQuery.data, refetch, userSession])
 
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <UserSessionContext.Provider value={contextValue}>
+      {children}
+    </UserSessionContext.Provider>
   )
 }
 
-export const useSession = () => React.useContext(UserContext)
+export const useUserSessionContext = () => React.useContext(UserSessionContext)
 
 export const getPrefetchCache = async (ctx) => {
   const queryCache = new QueryCache()

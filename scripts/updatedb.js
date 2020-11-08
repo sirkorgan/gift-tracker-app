@@ -110,6 +110,15 @@ const indexes = [
     params: { source: 'occasions' },
   },
   {
+    name: 'occasions_by_id',
+    params: {
+      source: 'occasions',
+      unique: true,
+      terms: [{ field: ['ref', 'id'] }],
+      values: [{ field: ['ref'] }],
+    },
+  },
+  {
     name: 'occasions_by_organizer',
     params: {
       source: 'occasions',
@@ -176,6 +185,18 @@ const indexes = [
       source: 'invitations',
       unique: true,
       terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['ref'] }],
+    },
+  },
+  {
+    name: 'invitations_by_occasionId_and_recipient',
+    params: {
+      source: 'invitations',
+      unique: true,
+      terms: [
+        { field: ['data', 'occasionId'] },
+        { field: ['data', 'recipient'] },
+      ],
       values: [{ field: ['ref'] }],
     },
   },
@@ -404,6 +425,11 @@ const roles = {
           actions: { read: true },
         },
         {
+          resource: { type: 'index', name: 'occasions_by_id' },
+          // TODO: only allow access to participants
+          actions: { read: true },
+        },
+        {
           resource: { type: 'index', name: 'occasions_by_organizer' },
           actions: { read: true },
         },
@@ -429,6 +455,13 @@ const roles = {
         },
         {
           resource: { type: 'index', name: 'invitations_by_occasionId' },
+          actions: { read: true },
+        },
+        {
+          resource: {
+            type: 'index',
+            name: 'invitations_by_occasionId_and_recipient',
+          },
           actions: { read: true },
         },
         {

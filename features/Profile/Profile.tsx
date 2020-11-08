@@ -1,46 +1,17 @@
 import React from 'react'
 import axios from 'axios'
 
-import { useSession } from '../../lib/user'
+import { useUserSessionContext } from '../../lib/user'
 import Button from '../../components/Button'
-
-// View own profile
-// Edit own profile
-
-export function InputField(props) {
-  const {
-    label = '',
-    initialValue = '',
-    placeholder = '',
-    onChange = (value: string) => {},
-    className,
-  } = props
-  const [value, setValue] = React.useState(initialValue)
-  return (
-    <div className={className}>
-      {label && (
-        <label htmlFor="username" className="block font-semibold text-sm">
-          {label}
-        </label>
-      )}
-      <input
-        type="text"
-        id="profilename"
-        name="profilename"
-        placeholder={placeholder}
-        value={value}
-        className="border-gray-600 border rounded-md px-2 py-1"
-        onChange={(event) => {
-          setValue(event.target.value)
-          onChange(event.target.value)
-        }}
-      />
-    </div>
-  )
-}
+import InputField from '../../components/InputField'
 
 export default function Profile(props) {
-  const { userAccount, userProfile, userSession, refetch } = useSession()
+  const {
+    userAccount,
+    userProfile,
+    userSession,
+    refetch,
+  } = useUserSessionContext()
 
   const [name, setName] = React.useState('')
   const [result, setResult] = React.useState('')
@@ -54,8 +25,13 @@ export default function Profile(props) {
         You can change your name here, by filling in the Username field and
         clicking Submit.
       </div>
-      <InputField label="Username" onChange={(value) => setName(value)} />
+      <InputField
+        id="profilename"
+        label="Username"
+        onChange={(value) => setName(value)}
+      />
       <Button
+        disabled={!name}
         onClick={async () => {
           // send API request and trigger refetch of profile
           try {

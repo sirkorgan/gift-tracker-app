@@ -7,13 +7,14 @@ import {
   animals,
 } from 'unique-names-generator'
 
-import { UserProfile, Participant } from '../types/domain-types'
+import { UserProfile, Participant, Invitation } from '../types/domain-types'
 import { IAdminAPI } from '../types/api-types'
 import {
   FaunaUserProfile,
   FaunaRef,
   FaunaUser,
   FaunaParticipant,
+  FaunaInvitation,
 } from '../types/fauna-types'
 import { createFaunaUserAPI } from './user-api'
 
@@ -237,6 +238,13 @@ class AdminAPI implements IAdminAPI {
     return await this.getUserProfileById(profile.id)
   }
 
+  async getInvitation(invitationId: string): Promise<Invitation> {
+    const doc = await this.client.query<FaunaInvitation>(
+      q.Get(q.Ref(q.Collection('invitations'), invitationId))
+    )
+    return unwrapWithId(doc)
+  }
+
   async addParticipant(
     profileId: string,
     occasionId: string
@@ -250,7 +258,22 @@ class AdminAPI implements IAdminAPI {
           },
         })
       )
-      // TODO: delete any related signuprequest or invitation
+      // delete any related invitation:
+      //  - for any invitation with occasionId and profileId === recipient,
+      //  - delete it
+      await this.client.query<void>(
+        q.Foreach(
+          q.Paginate(
+            q.Match(
+              q.Index('invitations_by_occasionId_and_recipient'),
+              occasionId,
+              profileId
+            )
+          ),
+          (invitationRef) => q.Delete(invitationRef)
+        )
+      )
+      // TODO: delete signuprequest
       return unwrapWithId(doc)
     } catch (err) {
       console.error(err)

@@ -1,10 +1,10 @@
 import React from 'react'
 import Layout from '../components/Layout'
 import Home from '../features/Home/Home'
-import { useSession } from '../lib/user'
+import { useUserSessionContext } from '../lib/user'
 
 const Page = (props) => {
-  const { userSession } = useSession()
+  const { userSession } = useUserSessionContext()
 
   return (
     <Layout>
