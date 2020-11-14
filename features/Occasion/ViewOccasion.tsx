@@ -1,18 +1,15 @@
-import Head from 'next/head'
 import Link from 'next/link'
-import React, { Fragment } from 'react'
+import React from 'react'
 import Button from '../../components/Button'
 import Heading from '../../components/Heading'
 import InputField from '../../components/InputField'
 import Section from '../../components/Section'
 import {
-  useGiftsByOccasion,
   useOccasion,
-  useParticipantsByOccasion,
-  useReceivedInvitations,
   useUserProfile,
+  useUserProfilesByOccasion,
 } from '../../lib/hooks'
-import { Participant, UserProfile } from '../../lib/types/domain-types'
+import { UserProfile } from '../../lib/types/domain-types'
 import { getApi, useUserSessionContext } from '../../lib/user'
 
 // Occasion not found (if no occasion with that id)
@@ -40,29 +37,19 @@ function ViewOccasion(props: { id: string }) {
   const session = useUserSessionContext()
   const occasion = useOccasion(id)
   const organizer = useUserProfile(occasion.data?.organizer)
-  const participants = useParticipantsByOccasion(id)
-
+  const participants = useUserProfilesByOccasion(id)
   const [userToInvite, setUserToInvite] = React.useState('')
 
   const userIsOrganizer = session?.userProfile.id === occasion.data?.organizer
 
-  const renderOrganizerLink = (p: UserProfile) => {
+  const renderParticipantLink = (p: UserProfile) => {
     if (!p) return null
     return (
-      <li>
-        <Link key={p.id} href={`/occasions/${id}/user/${p.id}`}>
-          <a>{p.userName || p.id} (Organizer)</a>
-        </Link>
-      </li>
-    )
-  }
-
-  const renderParticipantLink = (p: Participant) => {
-    if (!p) return null
-    return (
-      <li>
-        <Link key={p.id} href={`/occasions/${id}/user/${p.profileId}`}>
-          <a>{p.nickname || p.profileId}</a>
+      <li key={p.id}>
+        <Link href={`/occasions/${id}/user/${p.id}`}>
+          <a>
+            {p.name || p.id} {p.id === organizer.data?.id && '(Organizer)'}
+          </a>
         </Link>
       </li>
     )
@@ -76,14 +63,22 @@ function ViewOccasion(props: { id: string }) {
     <div className="space-y-2 ">
       <Section>
         <Heading>{occasion.data?.title}</Heading>
-        <p className="text-gray-600">Organized by {organizer.data?.userName}</p>
+        <p className="text-gray-600">Organized by {organizer.data?.name}</p>
         <p>{occasion.data?.description}</p>
-        <Heading>Participants</Heading>
         <div>
-          Click on someone to view their Wishlist and other gift suggestions!
+          <Link href={`/occasions/${id}/user/${session.userProfile.id}`}>
+            <div>
+              <Button>View your wishlist</Button>
+            </div>
+          </Link>
         </div>
+        <Heading>Participants</Heading>
+        <p>
+          Click on a name in the list below to view their wishlist and offer
+          gift suggestions!
+        </p>
         <ul className="list-disc pl-8" style={{ listStyle: 'revert' }}>
-          {renderOrganizerLink(organizer.data)}
+          {renderParticipantLink(organizer.data)}
           {participants.status === 'success' &&
             participants.data.map(renderParticipantLink)}
         </ul>

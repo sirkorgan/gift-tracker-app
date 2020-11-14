@@ -61,6 +61,7 @@ export interface IUserAPI {
 
   // PARTICIPANTS
   getParticipantsForOccasion(occasionId: string): Promise<Participant[]>
+  getUserProfilesForOccasion(occasionId: string): Promise<UserProfile[]>
 
   // GIFTS
   createGift(params: {

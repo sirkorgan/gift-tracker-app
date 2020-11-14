@@ -245,6 +245,15 @@ export class FaunaUserAPI implements IUserAPI {
     return unwrapPages(pageHelper)
   }
 
+  async getUserProfilesForOccasion(occasionId: string): Promise<UserProfile[]> {
+    const pageHelper = this.client
+      .paginate(
+        q.Match(q.Index('participants_profileId_by_occasionId'), occasionId)
+      )
+      .map((id) => q.Get(q.Ref(q.Collection('profiles'), id)))
+    return unwrapPages(pageHelper)
+  }
+
   async createGift(params: {
     occasionId: string
     name: string

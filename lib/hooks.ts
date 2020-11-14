@@ -19,6 +19,10 @@ async function fetchParticipantsByOccasion(key, occasionId) {
   return getApi().getParticipantsForOccasion(occasionId)
 }
 
+async function fetchUserProfilesByOccasion(key, occasionId) {
+  return getApi().getUserProfilesForOccasion(occasionId)
+}
+
 async function fetchGiftsByOccasion(key, occasionId) {
   return getApi().getGiftsForOccasion(occasionId)
 }
@@ -67,6 +71,16 @@ export function useParticipantsByOccasion(occasionId) {
   return useQuery(
     ['participantsByOccasion', occasionId],
     fetchParticipantsByOccasion,
+    {
+      enabled: !!occasionId,
+    }
+  )
+}
+
+export function useUserProfilesByOccasion(occasionId) {
+  return useQuery(
+    ['profilesByOccasion', occasionId],
+    fetchUserProfilesByOccasion,
     {
       enabled: !!occasionId,
     }

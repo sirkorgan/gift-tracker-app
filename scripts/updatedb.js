@@ -158,6 +158,15 @@ const indexes = [
     },
   },
   {
+    name: 'participants_profileId_by_occasionId',
+    params: {
+      source: 'participants',
+      unique: true,
+      terms: [{ field: ['data', 'occasionId'] }],
+      values: [{ field: ['data', 'profileId'] }],
+    },
+  },
+  {
     name: 'all_invitations',
     params: { source: 'invitations' },
   },
@@ -474,6 +483,14 @@ const roles = {
             name: 'participants_occasionId_by_profileId',
           },
           // TODO: allow read only if profileId is for current user
+          actions: { read: true },
+        },
+        {
+          resource: {
+            type: 'index',
+            name: 'participants_profileId_by_occasionId',
+          },
+          // TODO: allow read only if user is participant or organizer
           actions: { read: true },
         },
         {

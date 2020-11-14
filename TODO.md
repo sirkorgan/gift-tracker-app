@@ -46,3 +46,17 @@
 - [ ] suggest gifts for yourself for an occasion
 - [ ] suggest gifts for others for an occasion
 - [ ] claim gift suggestions so that others can avoid double-gifting
+
+# Laurie feedback
+
+- Wants to be able to use fun christmas colour scheme
+- Buttons need more feedback to know when it's doing something and when its done and whether it worked or not
+- Make layout better on mobile (claims and header etc)
+
+## Done
+
+- Fix wording to make it more obvious that you can click on your own name in the participants list to access your own wishlist (maybe make a shortcut to see your own wishlist)
+- Make it obvious that you can change your assigned username by going to the profile link in the header.
+- Fix typo in occasion page to make it say "offer" gift suggestions
+- Fix number names
+- Fix claims
