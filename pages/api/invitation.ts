@@ -24,17 +24,20 @@ export default async function handleInvitation(
     const { invitationId, action } = req.body as InvitationRequestBody
 
     // validate action: "accepted" or "ignored"
-    if (['accepted', 'ignored'].includes(action)) {
+    if (!['accepted', 'ignored'].includes(action)) {
       res.statusCode = 400
-      res.send('Bad action')
+      res.send('Bad action: ' + action)
       return
     }
 
     try {
       const invitation = await adminApi.getInvitation(invitationId)
-      const occasionId = invitation.occasionId
       const user = await adminApi.getUserByEmail(email)
-      await adminApi.addParticipant(user.profileId, occasionId)
+      if (action === 'accepted') {
+        await adminApi.addParticipant(user.profileId, invitation.occasionId)
+      } else if (action === 'ignored') {
+        await adminApi.updateInvitation(invitation.id, { status: 'ignored' })
+      }
     } catch (error) {
       res.statusCode = 500
       res.send(error.message)

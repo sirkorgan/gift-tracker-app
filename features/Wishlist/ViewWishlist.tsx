@@ -124,7 +124,7 @@ function ViewWishlist(props: { id: string; profileId: string }) {
       session.userProfile.id
     const suggestedByCurrentUser = gift.suggestedBy === session.userProfile.id
     return (
-      <Section key={gift.id}>
+      <Section key={gift.id} className="bg-gray-100 border-purple-600">
         <div className=" flex justify-between">
           <strong>{gift.name}</strong>
           <span className="text-gray-600">
@@ -173,7 +173,7 @@ function ViewWishlist(props: { id: string; profileId: string }) {
                       }
                     }}
                   >
-                    Release Claim
+                    Unclaim
                   </Button>
                 )}
               </React.Fragment>
@@ -199,6 +199,35 @@ function ViewWishlist(props: { id: string; profileId: string }) {
   return (
     <div className="space-y-2 ">
       <Section>
+        <Heading>
+          {userProfile.data?.name}'s wishlist for {occasion.data?.title}
+        </Heading>
+        {ownGifts.length > 0 &&
+          ownGifts.map((gift) => renderGiftListItem({ gift }))}
+        {ownGifts.length === 0 && (
+          <p>
+            {isListForCurrentUser ? 'Your ' : userProfile.data?.name + "'s "}
+            wishlist is empty. Add a gift suggestion!
+          </p>
+        )}
+      </Section>
+      <Section>
+        <Heading>
+          Other gift suggestions for{' '}
+          {isListForCurrentUser ? 'you' : userProfile.data?.name}
+        </Heading>
+        {otherGifts.length > 0 &&
+          otherGifts.map((gift) => renderGiftListItem({ gift }))}
+        {otherGifts.length === 0 && !isListForCurrentUser && (
+          <p>Nobody has suggested a gift for {userProfile.data?.name} yet.</p>
+        )}
+        {otherGifts.length === 0 && isListForCurrentUser && (
+          <p>
+            It's a surprise! You can only see gift suggestions for other people.
+          </p>
+        )}
+      </Section>
+      <Section>
         {!isListForCurrentUser && (
           <Heading>Suggest a Gift for {userProfile.data.name}</Heading>
         )}
@@ -208,30 +237,6 @@ function ViewWishlist(props: { id: string; profileId: string }) {
           suggestedFor={profileId}
           onSubmit={onSubmitCreateGift}
         />
-      </Section>
-      <Section className="bg-gray-100">
-        <Heading>
-          {userProfile.data?.name}'s wishlist for {occasion.data?.title}
-        </Heading>
-        {ownGifts.length > 0 &&
-          ownGifts.map((gift) => renderGiftListItem({ gift }))}
-        {ownGifts.length === 0 && <p>There are no gifts yet.</p>}
-      </Section>
-      <Section className="bg-gray-100">
-        <Heading>
-          Other gift suggestions for{' '}
-          {isListForCurrentUser ? 'you' : userProfile.data?.name}
-        </Heading>
-        {otherGifts.length > 0 &&
-          otherGifts.map((gift) => renderGiftListItem({ gift }))}
-        {otherGifts.length === 0 && !isListForCurrentUser && (
-          <p>There are no gifts yet.</p>
-        )}
-        {otherGifts.length === 0 && isListForCurrentUser && (
-          <p>
-            It's a surprise! You can only see gift suggestions for other people.
-          </p>
-        )}
       </Section>
     </div>
   )

@@ -32,7 +32,7 @@ export default async function callback(
           if (err.requestResult?.statusCode === 404) {
             shouldCreateUser = true
           } else {
-            console.log(`Could not get user and/or profile:`, err)
+            console.error(`Could not get user and/or profile:`, err)
           }
         }
 

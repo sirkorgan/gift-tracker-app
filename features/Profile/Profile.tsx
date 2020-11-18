@@ -43,7 +43,7 @@ export default function Profile(props) {
             refetch()
             setResult('Success!')
           } catch (err) {
-            console.log(err.response.data)
+            console.error(err.response.data)
             setResult('Error: ' + err.response.data)
           }
         }}

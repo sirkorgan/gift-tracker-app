@@ -39,6 +39,7 @@ function ViewOccasion(props: { id: string }) {
   const organizer = useUserProfile(occasion.data?.organizer)
   const participants = useUserProfilesByOccasion(id)
   const [userToInvite, setUserToInvite] = React.useState('')
+  const [inviteStatus, setInviteStatus] = React.useState('')
 
   const userIsOrganizer = session?.userProfile.id === occasion.data?.organizer
 
@@ -67,9 +68,7 @@ function ViewOccasion(props: { id: string }) {
         <p>{occasion.data?.description}</p>
         <div>
           <Link href={`/occasions/${id}/user/${session.userProfile.id}`}>
-            <div>
-              <Button>View your wishlist</Button>
-            </div>
+            <Button>View your wishlist</Button>
           </Link>
         </div>
         <Heading>Participants</Heading>
@@ -102,15 +101,20 @@ function ViewOccasion(props: { id: string }) {
               const userProfileToInvite = await getApi().getUserProfileByUserName(
                 userToInvite
               )
-              console.log(`Inviting user with profile:`, userProfileToInvite)
-              await getApi().createInvitation(
-                occasion.data.id,
-                userProfileToInvite.id
-              )
+              try {
+                await getApi().createInvitation(
+                  occasion.data.id,
+                  userProfileToInvite.id
+                )
+                setInviteStatus(`Successfully invited ${userToInvite}`)
+              } catch (err) {
+                setInviteStatus(`Failed to invite ${userToInvite}`)
+              }
             }}
           >
             Invite
           </Button>
+          <div>{inviteStatus}</div>
         </Section>
       )}
     </div>

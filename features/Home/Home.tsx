@@ -6,23 +6,60 @@ import Heading from '../../components/Heading'
 import InputField from '../../components/InputField'
 import Section from '../../components/Section'
 import {
+  useOccasion,
   useOccasionsByParticipant,
   useOwnOccasions,
   useReceivedInvitations,
+  useUserProfile,
 } from '../../lib/hooks'
+import { Invitation, InvitationStatus } from '../../lib/types/domain-types'
 import { useUserSessionContext } from '../../lib/user'
 
-function ReceivedInvitationsList(props) {
+function ReceivedInvitation(props: {
+  invitation: Invitation
+  onHandleInvitation: Function
+}) {
+  const { invitation, onHandleInvitation } = props
   const sessionContext = useUserSessionContext()
-  const receivedInvitations = useReceivedInvitations()
-  const handleInvitation = (invitationId, action) => {
-    axios.post('/api/invitation', {
+  const invitedBy = useUserProfile(invitation.sender)
+  const occasion = useOccasion(invitation.occasionId)
+  const handleInvitation = async (invitationId, action: InvitationStatus) => {
+    await axios.post('/api/invitation', {
       email: sessionContext.userSession.email,
       secret: sessionContext.userSession.fauna_token,
       invitationId,
       action,
     })
+    await onHandleInvitation()
   }
+  return (
+    <Section key={invitation.id} className="border-purple-600 bg-purple-100">
+      <p>
+        <strong>{invitedBy.data?.userName}</strong> invited you to join the
+        occasion <strong>{occasion.data?.title}</strong>
+      </p>
+      <Button
+        onClick={() => {
+          handleInvitation(invitation.id, 'accepted')
+        }}
+      >
+        Accept Invitation
+      </Button>
+      <Button
+        onClick={() => {
+          handleInvitation(invitation.id, 'ignored')
+        }}
+      >
+        Ignore Invitation
+      </Button>
+    </Section>
+  )
+}
+
+function ReceivedInvitationsList(props) {
+  const { userProfile } = useUserSessionContext()
+  const receivedInvitations = useReceivedInvitations()
+  const participatingOccasions = useOccasionsByParticipant(userProfile?.id)
   return (
     <React.Fragment>
       {receivedInvitations.data?.length > 0 &&
@@ -30,20 +67,13 @@ function ReceivedInvitationsList(props) {
           .filter((inv) => inv.status === 'pending')
           .map((inv) => {
             return (
-              <Section key={inv.id} className="border-purple-600 bg-purple-100">
-                <p>
-                  <strong>{inv.sender}</strong> invited you to join the occasion{' '}
-                  <strong>{inv.occasionId}</strong>
-                </p>
-                <Button
-                  onClick={() => {
-                    handleInvitation(inv.id, 'accept')
-                  }}
-                >
-                  Accept Invitation
-                </Button>
-                <Button>Ignore Invitation</Button>
-              </Section>
+              <ReceivedInvitation
+                invitation={inv}
+                onHandleInvitation={() => {
+                  receivedInvitations.refetch()
+                  participatingOccasions.refetch()
+                }}
+              />
             )
           })}
     </React.Fragment>
@@ -60,29 +90,28 @@ function OccasionList(props) {
       <Heading>Your Occasions</Heading>
       {ownOccasions.data?.length > 0 && (
         <React.Fragment>
-          <p>This is a list of occasions that you are organizing.</p>
-
-          <Section>
-            <ul className="pl-5">
-              {ownOccasions.data?.map((occasion) => {
-                const href = `/occasions/${occasion.id}`
-                return (
-                  <li key={href}>
-                    <Link href={href}>
-                      <a className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600">
-                        {occasion.title}
-                      </a>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </Section>
+          <p>
+            You are the <strong>organizer</strong> of these occasions:
+          </p>
+          <ul className="pl-5">
+            {ownOccasions.data?.map((occasion) => {
+              const href = `/occasions/${occasion.id}`
+              return (
+                <li key={href}>
+                  <Link href={href}>
+                    <a className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600">
+                      {occasion.title}
+                    </a>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
         </React.Fragment>
       )}
       {participatingOccasions.data?.length > 0 && (
         <React.Fragment>
-          <p>This is a list of occasions that you are participating in.</p>
+          <p>You are participating in these occasions:</p>
           <ul className="pl-5">
             {participatingOccasions.data?.map((occasion) => {
               const href = `/occasions/${occasion.id}`

@@ -14,7 +14,6 @@ const Header = () => {
             <a className="text-5xl font-bold text-purple-500">Gift Tracker</a>
           </Link>
         </h1>
-        <div> version 0.1.0 (alpha)</div>
         <div className="flex flex-row justify-between py-2 px-4 bg-purple-100">
           <ul className="flex flex-row space-x-4">
             <li>

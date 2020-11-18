@@ -55,6 +55,9 @@
 
 ## Done
 
+- feedback for sending invitation
+- when acknowledging invitation, refetch
+- fix numbers on invitation
 - Fix wording to make it more obvious that you can click on your own name in the participants list to access your own wishlist (maybe make a shortcut to see your own wishlist)
 - Make it obvious that you can change your assigned username by going to the profile link in the header.
 - Fix typo in occasion page to make it say "offer" gift suggestions

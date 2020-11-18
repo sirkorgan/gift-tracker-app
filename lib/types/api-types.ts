@@ -7,6 +7,7 @@ import {
   Invitation,
   Gift,
   Claim,
+  InvitationStatus,
 } from './domain-types'
 
 export interface IUserAPI {
@@ -125,6 +126,10 @@ export interface IAdminAPI {
 
   // PARTICIPANTS
   getInvitation(invitationId: string): Promise<Invitation>
+  updateInvitation(
+    invitationId: string,
+    data: Partial<Invitation>
+  ): Promise<Invitation>
 
   /**
    * After adding the particpant, any related SignupRequest or Invitation should
@@ -146,7 +151,7 @@ export type InvitationRequestBody = {
   email: string
   secret: string
   invitationId: string
-  action: 'accept'
+  action: InvitationStatus
 }
 
 export type SignupRequestBody = {

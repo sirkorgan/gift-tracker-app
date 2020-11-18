@@ -144,6 +144,8 @@ export interface Participant {
   nickname?: string
 }
 
+export type InvitationStatus = 'pending' | 'ignored' | 'accepted'
+
 /**
  * A user may become a Participant in an Occasion by accepting an Invitation
  * from an organizer.
@@ -175,7 +177,7 @@ export interface Invitation {
    * it. If the recipient ignores the invitation, they will no longer be shown
    * that invitation.
    */
-  status: 'pending' | 'ignored' | 'accepted'
+  status: InvitationStatus
 }
 
 /**

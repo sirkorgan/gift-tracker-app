@@ -53,7 +53,7 @@ const collections = [
   { name: 'profiles' },
   { name: 'occasions' },
   { name: 'participants' },
-  { name: 'invitations' },
+  { name: 'invitations', params: { ttl_days: 30 } },
   { name: 'signuprequests' },
   { name: 'gifts' },
   { name: 'claims' },

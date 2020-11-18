@@ -89,7 +89,6 @@ class AdminAPI implements IAdminAPI {
         tokens.push(issued.data.token)
       }
     })
-    console.log('getUserTokensByEmail', tokens)
     return tokens
   }
 
@@ -241,6 +240,18 @@ class AdminAPI implements IAdminAPI {
   async getInvitation(invitationId: string): Promise<Invitation> {
     const doc = await this.client.query<FaunaInvitation>(
       q.Get(q.Ref(q.Collection('invitations'), invitationId))
+    )
+    return unwrapWithId(doc)
+  }
+
+  async updateInvitation(
+    invitationId: string,
+    data: Partial<Invitation>
+  ): Promise<Invitation> {
+    // validate update data
+    delete data.id
+    const doc = await this.client.query<FaunaInvitation>(
+      q.Update(q.Ref(q.Collection('invitations'), invitationId), { data })
     )
     return unwrapWithId(doc)
   }
