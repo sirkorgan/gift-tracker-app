@@ -90,8 +90,7 @@ export function useProfileQuery(profileId) {
 
 export const UserSessionProvider = ({ initialUser, children }) => {
   const userSessionQuery = useSession(initialUser)
-  const userSession = userSessionQuery.data
-  const appUserQuery = useUserQuery(userSession?.email)
+  const appUserQuery = useUserQuery(userSessionQuery.data?.email)
   const appProfileQuery = useProfileQuery(appUserQuery.data?.profileId)
 
   const refetch = React.useCallback(() => {
@@ -101,14 +100,15 @@ export const UserSessionProvider = ({ initialUser, children }) => {
   }, [appProfileQuery, appUserQuery, userSessionQuery])
 
   const contextValue = React.useMemo(() => {
-    return {
-      userSession: userSession,
-      userApi: initApi(userSession?.fauna_token),
+    const ctx = {
+      userSession: userSessionQuery.data,
+      userApi: initApi(userSessionQuery.data?.fauna_token),
       userAccount: appUserQuery.data,
       userProfile: appProfileQuery.data,
       refetch,
     }
-  }, [appProfileQuery.data, appUserQuery.data, refetch, userSession])
+    return ctx
+  }, [appProfileQuery.data, appUserQuery.data, refetch, userSessionQuery.data])
 
   return (
     <UserSessionContext.Provider value={contextValue}>

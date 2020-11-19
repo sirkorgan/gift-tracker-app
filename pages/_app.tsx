@@ -10,10 +10,11 @@ import { getPrefetchCache, UserSessionProvider } from '../lib/user'
 import '../css/tailwind.css'
 import getAuth0 from '../lib/auth0/auth0'
 
-const queryCache = new QueryCache()
-
 function GiftTrackerApp({ Component, pageProps }: AppProps) {
   const { user, dehydratedState } = pageProps
+
+  const [queryCache] = React.useState(() => new QueryCache())
+
   return (
     <ReactQueryCacheProvider queryCache={queryCache}>
       <Hydrate state={dehydratedState}>
