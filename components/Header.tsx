@@ -29,11 +29,15 @@ const Header = () => {
 
             {userProfile ? (
               <li>
-                <a href="/api/logout">Logout</a>
+                <Link href="/api/logout">
+                  <a>Logout</a>
+                </Link>
               </li>
             ) : (
               <li>
-                <a href="/api/login">Login / Signup</a>
+                <Link href="/api/login">
+                  <a>Login / Signup</a>
+                </Link>
               </li>
             )}
           </ul>
