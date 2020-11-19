@@ -57,8 +57,6 @@ export default async function callback(
 
         let token
         if (user) {
-          // remove all user tokens
-          await adminApi.logoutUser(user.email)
           // Create a token for this user. This token will be saved in the auth0
           // session so that it is available to the frontend app to query
           // faunadb directly.
