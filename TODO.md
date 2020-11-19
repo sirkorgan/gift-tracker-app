@@ -53,8 +53,13 @@
 - Buttons need more feedback to know when it's doing something and when its done and whether it worked or not
 - Make layout better on mobile (claims and header etc)
 
+# Wes notes
+
+- Stop logging people out when they log in from another device
+
 ## Done
 
+- Start using loading indicators, especially on occasion list in home page
 - feedback for sending invitation
 - when acknowledging invitation, refetch
 - fix numbers on invitation

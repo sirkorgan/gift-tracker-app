@@ -85,6 +85,10 @@ function OccasionList(props) {
   const ownOccasions = useOwnOccasions(userProfile?.id)
   const participatingOccasions = useOccasionsByParticipant(userProfile?.id)
 
+  const dataReady =
+    ownOccasions.status === 'success' &&
+    participatingOccasions.status === 'success'
+
   return (
     <Section>
       <Heading>Your Occasions</Heading>
@@ -128,9 +132,12 @@ function OccasionList(props) {
           </ul>
         </React.Fragment>
       )}
-      {!ownOccasions.data?.length && !participatingOccasions.data?.length && (
-        <div>You are not currently participating in any occasions.</div>
-      )}
+      {dataReady &&
+        !ownOccasions.data?.length &&
+        !participatingOccasions.data?.length && (
+          <div>You are not currently participating in any occasions.</div>
+        )}
+      {!dataReady && <div>Loading...</div>}
     </Section>
   )
 }
