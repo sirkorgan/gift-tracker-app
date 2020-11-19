@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useUserSessionContext } from '../lib/user'
 
 const Header = () => {
-  const { userSession, userProfile } = useUserSessionContext()
+  const { userProfile } = useUserSessionContext()
 
   return (
     <header className="">
@@ -27,18 +27,14 @@ const Header = () => {
               </Link>
             </li>
 
-            {userSession ? (
-              <>
-                <li>
-                  <a href="/api/logout">Logout</a>
-                </li>
-              </>
+            {userProfile ? (
+              <li>
+                <a href="/api/logout">Logout</a>
+              </li>
             ) : (
-              <>
-                <li>
-                  <a href="/api/login">Login / Signup</a>
-                </li>
-              </>
+              <li>
+                <a href="/api/login">Login / Signup</a>
+              </li>
             )}
           </ul>
           {userProfile && (
