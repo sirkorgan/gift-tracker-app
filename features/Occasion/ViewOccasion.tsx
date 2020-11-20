@@ -91,6 +91,7 @@ function ViewOccasion(props: { id: string }) {
           <InputField
             id="inviteUser"
             label="Username (ex. SecretSanta#1234)"
+            value={userToInvite}
             onChange={(value) => {
               setUserToInvite(value)
             }}

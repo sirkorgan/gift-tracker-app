@@ -28,6 +28,7 @@ export default function Profile(props) {
       <InputField
         id="profilename"
         label="Username"
+        value={name}
         onChange={(value) => setName(value)}
       />
       <Button

@@ -55,10 +55,9 @@
 
 # Wes notes
 
-- Stop logging people out when they log in from another device
-
 ## Done
 
+- Stop logging people out when they log in from another device
 - Start using loading indicators, especially on occasion list in home page
 - feedback for sending invitation
 - when acknowledging invitation, refetch

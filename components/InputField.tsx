@@ -3,7 +3,7 @@ import React from 'react'
 function InputField(props: {
   id: string
   label?: string
-  initialValue?: string
+  value: string
   placeholder?: string
   onChange?: (value: string) => void
   className?: string
@@ -11,12 +11,11 @@ function InputField(props: {
   const {
     id,
     label = '',
-    initialValue = '',
+    value = '',
     placeholder = '',
     onChange = (value: string) => {},
     className,
   } = props
-  const [value, setValue] = React.useState(initialValue)
   return (
     <div className={'space-y-1 ' + className}>
       {label && (
@@ -32,7 +31,6 @@ function InputField(props: {
         value={value}
         className="border-gray-400 border rounded-md px-2 py-1"
         onChange={(event) => {
-          setValue(event.target.value)
           onChange(event.target.value)
         }}
       />

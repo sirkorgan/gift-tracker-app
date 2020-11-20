@@ -37,7 +37,7 @@ import { getApi, useUserSessionContext } from '../../lib/user'
 function CreateGiftForm(props: {
   occasionId: string
   suggestedFor: string
-  onSubmit: Function
+  onSubmit: ({ name, description, occasionId, suggestedFor }) => Promise<void>
 }) {
   const { occasionId, suggestedFor, onSubmit } = props
   const [name, setName] = React.useState('')
@@ -47,16 +47,20 @@ function CreateGiftForm(props: {
       <InputField
         id="giftName"
         label="Gift Title"
+        value={name}
         onChange={(value) => setName(value)}
       />
       <InputField
         id="giftDescription"
         label="Gift Description"
+        value={description}
         onChange={(value) => setDescription(value)}
       />
       <Button
-        onClick={() => {
-          onSubmit({ name, description, occasionId, suggestedFor })
+        onClick={async () => {
+          await onSubmit({ name, description, occasionId, suggestedFor })
+          setName('')
+          setDescription('')
         }}
         disabled={!name.trim()}
       >

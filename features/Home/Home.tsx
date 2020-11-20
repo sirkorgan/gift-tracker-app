@@ -161,11 +161,13 @@ function CreateOccasionForm(props) {
       <InputField
         id="title"
         label="Title"
+        value={title}
         onChange={(value) => setTitle(value)}
       />
       <InputField
         id="description"
         label="Description"
+        value={description}
         onChange={(value) => setDescription(value)}
       />
       <Button
