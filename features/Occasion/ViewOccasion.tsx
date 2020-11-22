@@ -66,9 +66,12 @@ function ViewOccasion(props: { id: string }) {
         <Heading>{occasion.data?.title}</Heading>
         <p className="text-gray-600">Organized by {organizer.data?.name}</p>
         <p>{occasion.data?.description}</p>
-        <div>
+        <div className="space-x-2">
           <Link href={`/occasions/${id}/user/${session.userProfile.id}`}>
             <Button>View your wishlist</Button>
+          </Link>
+          <Link href={`/occasions/${id}/shopping-list`}>
+            <Button>View your shopping list</Button>
           </Link>
         </div>
         <Heading>Participants</Heading>

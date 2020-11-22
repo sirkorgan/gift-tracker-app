@@ -14,6 +14,7 @@ export interface IUserAPI {
   getUserByEmail(email: string): Promise<User>
   getUserProfileByUserName(userName: string): Promise<UserProfile>
   getUserProfileById(id: string): Promise<UserProfile>
+  getLoggedInUserProfile(): Promise<UserProfile>
 
   // OCCASIONS
 

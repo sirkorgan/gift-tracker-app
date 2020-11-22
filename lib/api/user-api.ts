@@ -88,6 +88,13 @@ export class FaunaUserAPI implements IUserAPI {
     return unwrapWithId(doc)
   }
 
+  async getLoggedInUserProfile(): Promise<UserProfile> {
+    const userProfileId = await this.client.query<string>(
+      getIdentityProfileId()
+    )
+    return this.getUserProfileById(userProfileId)
+  }
+
   // OCCASIONS
 
   async createOccasion(params: {
@@ -362,6 +369,7 @@ export class FaunaUserAPI implements IUserAPI {
     )
     return unwrapWithId(doc)
   }
+
   async getClaimsForOccasion(occasionId: string): Promise<Claim[]> {
     const getClaimGiftRef = (claimRef) =>
       q.Ref(
@@ -389,17 +397,22 @@ export class FaunaUserAPI implements IUserAPI {
       )
       .map((ref) => q.Get(ref))
     const claims: Claim[] = await unwrapPages(pageHelper)
+
+    const userProfile = await this.getLoggedInUserProfile()
+
     // unset the claimedBy fields of anonymous claims. TODO: make this happen at
     // the database level - we've already transmitted the data we are trying to
     // hide, so users can still get the claimedBy values from the network
     // request if they are interested.
     for (const claim of claims) {
-      if (claim.anonymous) {
+      // preserve claimedBy data for current user's claims, needed for shopping list
+      if (claim.anonymous && claim.claimedBy !== userProfile.id) {
         delete claim.claimedBy
       }
     }
     return claims
   }
+
   async deleteClaim(claimId: string): Promise<void> {
     await this.client.query(q.Delete(q.Ref(q.Collection('claims'), claimId)))
   }

@@ -122,11 +122,19 @@ function ViewWishlist(props: { id: string; profileId: string }) {
 
   function renderGiftListItem(props: { gift: Gift }) {
     const { gift } = props
-    const isGiftClaimed = allClaims.data?.find((c) => c.giftId === gift.id)
+    const isGiftClaimed = Boolean(
+      allClaims.data?.find((c) => c.giftId === gift.id)
+    )
     const isGiftClaimedByCurrentUser =
       allClaims.data?.find((c) => c.giftId === gift.id)?.claimedBy ===
       session.userProfile.id
     const suggestedByCurrentUser = gift.suggestedBy === session.userProfile.id
+
+    console.log({
+      isListForCurrentUser,
+      isGiftClaimed,
+      allClaimsStatus: allClaims.status,
+    })
     return (
       <Section key={gift.id} className="bg-gray-100 border-purple-600">
         <div className=" flex justify-between">
