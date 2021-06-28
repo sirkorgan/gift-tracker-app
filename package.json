@@ -11,7 +11,7 @@
     "test:api": "npx jest --config api-tests/jest-api.config.js --runInBand"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^0.16.0",
+    "@auth0/nextjs-auth0": "^1.4.2",
     "axios": "^0.21.0",
     "babel-eslint": "^10.0.0",
     "chalk": "^4.1.0",
