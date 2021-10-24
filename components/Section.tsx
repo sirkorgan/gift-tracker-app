@@ -5,7 +5,7 @@ function Section(props) {
   return (
     <section
       className={
-        'flex flex-col space-y-2 p-4 border rounded-lg bg-white ' + className
+        'flex flex-col space-y-2 p-3 border rounded-md bg-white ' + className
       }
     >
       {children}

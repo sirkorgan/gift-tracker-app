@@ -9,7 +9,7 @@ function Button(props, ref) {
       ref={ref}
       disabled={disabled}
       className={classNames(
-        'rounded-md py-1 px-2 bg-purple-200 hover:bg-purple-300',
+        'rounded-md py-1 px-2 bg-green-200 hover:bg-green-300',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >

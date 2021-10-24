@@ -30,4 +30,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+.faunarc
+
 /log.txt

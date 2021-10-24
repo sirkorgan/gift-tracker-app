@@ -11,10 +11,12 @@ const Header = () => {
       <nav>
         <h1>
           <Link href="/">
-            <a className="text-5xl font-bold text-purple-500">Gift Tracker</a>
+            <a className="text-2xl font-bold text-green-700 px-2">
+              Gift Tracker
+            </a>
           </Link>
         </h1>
-        <div className="flex flex-row justify-between py-2 px-4 bg-purple-100">
+        <div className="flex flex-row justify-between py-2 px-4 bg-green-100">
           <ul className="flex flex-row space-x-4">
             <li>
               <Link href="/">
