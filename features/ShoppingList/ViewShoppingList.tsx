@@ -85,7 +85,13 @@ function ViewShoppingList(props: { occasionId: string }) {
             suggested by {getUserName(gift.suggestedBy)}
           </span>
         </div>
-        <div>{gift.description}</div>
+        <div
+          style={{
+            overflowWrap: 'break-word',
+          }}
+        >
+          {gift.description}
+        </div>
       </Section>
     )
   }

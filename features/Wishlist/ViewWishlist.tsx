@@ -143,7 +143,13 @@ function ViewWishlist(props: { id: string; profileId: string }) {
             suggested by {getUserName(gift.suggestedBy)}
           </span>
         </div>
-        <div>{gift.description}</div>
+        <div
+          style={{
+            overflowWrap: 'break-word',
+          }}
+        >
+          {gift.description}
+        </div>
         <div className="flex">
           <div className="flex justify-start space-x-2 flex-grow">
             {!isListForCurrentUser && (
