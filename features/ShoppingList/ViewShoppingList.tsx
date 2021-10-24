@@ -13,6 +13,7 @@ import {
 import { IUserAPI } from '../../lib/types/api-types'
 import { Gift } from '../../lib/types/domain-types'
 import { getApi, useUserSessionContext } from '../../lib/user'
+import { isLink } from '../../lib/util'
 
 interface ShoppingList {
   [userProfileId: string]: {
@@ -90,7 +91,13 @@ function ViewShoppingList(props: { occasionId: string }) {
             overflowWrap: 'break-word',
           }}
         >
-          {gift.description}
+          {isLink(gift.description) ? (
+            <a href={gift.description} target="_blank" rel="noreferrer">
+              {gift.description}
+            </a>
+          ) : (
+            gift.description
+          )}{' '}
         </div>
       </Section>
     )

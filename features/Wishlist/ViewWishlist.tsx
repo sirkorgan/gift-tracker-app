@@ -13,6 +13,7 @@ import {
 import { IUserAPI } from '../../lib/types/api-types'
 import { Gift } from '../../lib/types/domain-types'
 import { getApi, useUserSessionContext } from '../../lib/user'
+import { isLink } from '../../lib/util'
 
 // Occasion not found (if no occasion with that id)
 
@@ -135,6 +136,7 @@ function ViewWishlist(props: { id: string; profileId: string }) {
       isGiftClaimed,
       allClaimsStatus: allClaims.status,
     })
+
     return (
       <Section key={gift.id} className="bg-red-100 border-red-600">
         <div className=" flex justify-between">
@@ -148,7 +150,13 @@ function ViewWishlist(props: { id: string; profileId: string }) {
             overflowWrap: 'break-word',
           }}
         >
-          {gift.description}
+          {isLink(gift.description) ? (
+            <a href={gift.description} target="_blank" rel="noreferrer">
+              {gift.description}
+            </a>
+          ) : (
+            gift.description
+          )}
         </div>
         <div className="flex">
           <div className="flex justify-start space-x-2 flex-grow">
