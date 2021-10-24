@@ -33,7 +33,7 @@ function ReceivedInvitation(props: {
     await onHandleInvitation()
   }
   return (
-    <Section key={invitation.id} className="border-purple-600 bg-purple-100">
+    <Section key={invitation.id} className="border-red-600 bg-red-100">
       <p>
         <strong>{invitedBy.data?.userName}</strong> invited you to join the
         occasion <strong>{occasion.data?.title}</strong>

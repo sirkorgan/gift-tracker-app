@@ -136,7 +136,7 @@ function ViewWishlist(props: { id: string; profileId: string }) {
       allClaimsStatus: allClaims.status,
     })
     return (
-      <Section key={gift.id} className="bg-gray-100 border-purple-600">
+      <Section key={gift.id} className="bg-red-100 border-red-600">
         <div className=" flex justify-between">
           <strong>{gift.name}</strong>
           <span className="text-gray-600">
